@@ -1,0 +1,36 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Song {
+  _id: ID!
+  title: String!
+  artist: String!
+  albumName: String
+  duration: Int!
+  key: String
+  tempo: Int
+  difficulty: String
+  tags: [String!]
+  fileUrl: String
+  videoUrl: String
+  coverImageUrl: String
+  lyrics: String
+  chordNotationStyle: String
+  isPublic: Boolean
+  playCount: Int
+  lastPlayedAt: DateTime
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Query {
+  hello: String!
+  songs: [Song!]!
+  song(id: ID!): Song!
+}
