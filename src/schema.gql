@@ -29,8 +29,21 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+type Playlist {
+  _id: ID!
+  name: String!
+  description: String
+  coverImageUrl: String
+  songIds: [ID!]
+  isPublic: Boolean
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
 type Query {
   hello: String!
   songs: [Song!]!
   song(id: ID!): Song!
+  playlists: [Playlist!]!
+  playlist(id: ID!): Playlist!
 }

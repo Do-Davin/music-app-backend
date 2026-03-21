@@ -1,0 +1,39 @@
+import { ObjectType, Field, ID } from '@nestjs/graphql';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
+
+@ObjectType()
+@Schema({ timestamps: true })
+export class Playlist {
+  @Field(() => ID)
+  _id: Types.ObjectId;
+
+  @Field()
+  @Prop({ required: true })
+  name: string;
+
+  @Field({ nullable: true })
+  @Prop()
+  description: string;
+
+  @Field({ nullable: true })
+  @Prop()
+  coverImageUrl: string;
+
+  @Field(() => [ID], { nullable: true })
+  @Prop({ type: [Types.ObjectId], ref: 'Song' })
+  songIds: Types.ObjectId[];
+
+  @Field({ nullable: true, defaultValue: false })
+  @Prop({ default: false })
+  isPublic: boolean;
+
+  @Field({ nullable: true })
+  createdAt: Date;
+
+  @Field({ nullable: true })
+  updatedAt: Date;
+}
+
+export type PlaylistDocument = Playlist & Document;
+export const PlaylistSchema = SchemaFactory.createForClass(Playlist);
