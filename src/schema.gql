@@ -40,10 +40,22 @@ type Playlist {
   updatedAt: DateTime
 }
 
+type User {
+  _id: ID!
+  username: String!
+  email: String!
+  profileImageUrl: String
+  practiceGoals_dailyMinutes: Int
+  practiceGoals_weeklyDays: Int
+  practiceStreak_currentStreak: Int
+  practiceStreak_longestStreak: Int
+}
+
 type Query {
   hello: String!
   songs: [Song!]!
   song(id: ID!): Song!
   playlists: [Playlist!]!
   playlist(id: ID!): Playlist!
+  me: User!
 }
