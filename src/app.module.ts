@@ -7,9 +7,9 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
 import { AppResolver } from './app.resolver';
-import { SongsModule } from './songs/songs.module';
-import { PlaylistsModule } from './playlists/playlists.module';
-import { UsersModule } from './users/users.module';
+import { PlaylistsModule } from './modules/playlists/playlists.module';
+import { UsersModule } from './modules/users/users.module';
+import { SongsModule } from './modules/songs/songs.module';
 
 @Module({
   imports: [
