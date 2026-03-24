@@ -5,9 +5,7 @@ import { Song, SongDocument } from './schemas/song.schema';
 
 @Injectable()
 export class SongsService {
-  constructor(
-    @InjectModel(Song.name) private songModel: Model<SongDocument>,
-  ) {}
+  constructor(@InjectModel(Song.name) private songModel: Model<SongDocument>) {}
 
   async findAll(): Promise<Song[]> {
     return this.songModel.find().exec();
