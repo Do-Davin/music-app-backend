@@ -76,6 +76,11 @@ type Song {
   updatedAt: DateTime
 }
 
+type AuthResponse {
+  accessToken: String!
+  user: User!
+}
+
 type Query {
   hello: String!
   songs: [Song!]!
@@ -83,4 +88,14 @@ type Query {
   playlists: [Playlist!]!
   playlist(id: ID!): Playlist!
   me: User!
+}
+
+type Mutation {
+  register(input: RegisterInput!): AuthResponse!
+}
+
+input RegisterInput {
+  username: String!
+  email: String!
+  password: String!
 }

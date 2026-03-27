@@ -10,6 +10,7 @@ import { AppResolver } from './app.resolver';
 import { PlaylistsModule } from './modules/playlists/playlists.module';
 import { UsersModule } from './modules/users/users.module';
 import { SongsModule } from './modules/songs/songs.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { SongsModule } from './modules/songs/songs.module';
     SongsModule,
     PlaylistsModule,
     UsersModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService, AppResolver],
