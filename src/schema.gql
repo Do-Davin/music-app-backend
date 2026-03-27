@@ -18,15 +18,40 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+type PracticeStreak {
+  currentStreak: Int
+  longestStreak: Int
+  lastPracticeDate: DateTime
+}
+
+type PracticeGoals {
+  dailyMinutes: Int
+  weeklyDays: Int
+}
+
+type Preferences {
+  defaultBpm: Int
+  tuningHz: Int
+  instrument: String
+}
+
+type RecentlyPlayed {
+  songId: ID!
+  playedAt: DateTime!
+}
+
 type User {
   _id: ID!
   username: String!
   email: String!
   profileImageUrl: String
-  practiceGoals_dailyMinutes: Int
-  practiceGoals_weeklyDays: Int
-  practiceStreak_currentStreak: Int
-  practiceStreak_longestStreak: Int
+  likedSongIds: [ID!]
+  recentlyPlayed: [RecentlyPlayed!]
+  practiceGoals: PracticeGoals
+  practiceStreak: PracticeStreak
+  preferences: Preferences
+  createdAt: DateTime
+  updatedAt: DateTime
 }
 
 type Song {
