@@ -30,7 +30,8 @@ export class AuthService {
     };
 
     return {
-      accessToken: this.jwtService.sign(payload),
+      accessToken: this.jwtService.sign(payload, { expiresIn: '7d' }),
+      refreshToken: this.jwtService.sign(payload, { expiresIn: '30d' }),
       user,
     };
   }
@@ -45,8 +46,41 @@ export class AuthService {
     };
 
     return {
-      accessToken: this.jwtService.sign(payload),
+      accessToken: this.jwtService.sign(payload, { expiresIn: '7d' }),
+      refreshToken: this.jwtService.sign(payload, { expiresIn: '30d' }),
       user,
     };
+  }
+
+  async refreshToken(token: string) {
+    try {
+      const payload = this.jwtService.verify<JwtPayload>(token);
+
+      const user = await this.usersService.findById(payload.sub);
+
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      const newPayload: JwtPayload = {
+        sub: user._id.toString(),
+        email: user.email,
+        username: user.username,
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-unsafe-assignment
+      const { password: _pwd, ...userWithoutPassword } = user.toObject();
+
+      return {
+        accessToken: this.jwtService.sign(newPayload, { expiresIn: '7d' }),
+        refreshToken: this.jwtService.sign(newPayload, { expiresIn: '30d' }),
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        user: userWithoutPassword,
+      };
+    } catch (error) {
+      throw new UnauthorizedException(
+        `Invalid or expired refresh token: ${error}`,
+      );
+    }
   }
 }

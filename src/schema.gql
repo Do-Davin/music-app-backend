@@ -78,6 +78,7 @@ type Song {
 
 type AuthResponse {
   accessToken: String!
+  refreshToken: String!
   user: User!
 }
 
@@ -93,6 +94,7 @@ type Query {
 type Mutation {
   register(input: RegisterInput!): AuthResponse!
   login(input: LoginInput!): AuthResponse!
+  refreshToken(input: RefreshTokenInput!): AuthResponse!
 }
 
 input RegisterInput {
@@ -104,4 +106,8 @@ input RegisterInput {
 input LoginInput {
   email: String!
   password: String!
+}
+
+input RefreshTokenInput {
+  refreshToken: String!
 }
