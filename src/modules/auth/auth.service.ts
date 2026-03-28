@@ -96,4 +96,13 @@ export class AuthService {
       email: user.email,
     };
   }
+
+  async verifyCode(email: string, code: string) {
+    const isValid = await this.usersService.verifyResetCode(email, code);
+
+    return {
+      valid: isValid,
+      message: isValid ? 'Code verified successfully' : 'Invalid code',
+    };
+  }
 }
