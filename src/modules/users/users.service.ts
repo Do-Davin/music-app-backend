@@ -432,4 +432,34 @@ export class UsersService {
 
     return true;
   }
+
+  async resetPassword(
+    email: string,
+    code: string,
+    newPassword: string,
+  ): Promise<void> {
+    // Verify code first
+    await this.verifyResetCode(email, code);
+
+    // Validate new password
+    this.validatePassword(newPassword);
+
+    const user = await this.userModel
+      .findOne({ email: email.toLowerCase() })
+      .exec();
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Hash new password
+    const hashedPassword: string = await bcrypt.hash(newPassword, 10);
+
+    // Update password and clear reset code fields
+    user.password = hashedPassword;
+    user.resetCode = undefined;
+    user.resetCodeExpiry = undefined;
+
+    await user.save();
+  }
 }

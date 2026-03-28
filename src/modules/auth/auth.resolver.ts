@@ -8,6 +8,8 @@ import { SendResetCodeInput } from './dto/send-reset-code.input';
 import { ResetCodeResponse } from './entities/reset-code.entity';
 import { VerifyCodeInput } from './dto/verify-code.input';
 import { VerifyCodeResponse } from './entities/verify-code.entity';
+import { ResetPasswordInput } from './dto/reset-password.input';
+import { ResetPasswordResponse } from './entities/reset-password.entity';
 
 @Resolver()
 export class AuthResolver {
@@ -48,5 +50,16 @@ export class AuthResolver {
     @Args('input') input: VerifyCodeInput,
   ): Promise<VerifyCodeResponse> {
     return this.authService.verifyCode(input.email, input.code);
+  }
+
+  @Mutation(() => ResetPasswordResponse)
+  async resetPassword(
+    @Args('input') input: ResetPasswordInput,
+  ): Promise<ResetPasswordResponse> {
+    return this.authService.resetPassword(
+      input.email,
+      input.code,
+      input.newPassword,
+    );
   }
 }

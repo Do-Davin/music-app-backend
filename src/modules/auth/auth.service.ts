@@ -105,4 +105,13 @@ export class AuthService {
       message: isValid ? 'Code verified successfully' : 'Invalid code',
     };
   }
+
+  async resetPassword(email: string, code: string, newPassword: string) {
+    await this.usersService.resetPassword(email, code, newPassword);
+
+    return {
+      success: true,
+      message: 'Password reset successfully',
+    };
+  }
 }
