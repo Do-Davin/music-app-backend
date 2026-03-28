@@ -92,10 +92,16 @@ type Query {
 
 type Mutation {
   register(input: RegisterInput!): AuthResponse!
+  login(input: LoginInput!): AuthResponse!
 }
 
 input RegisterInput {
   username: String!
+  email: String!
+  password: String!
+}
+
+input LoginInput {
   email: String!
   password: String!
 }

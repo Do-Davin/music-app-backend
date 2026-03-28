@@ -2,6 +2,7 @@ import { Resolver, Mutation, Args } from '@nestjs/graphql';
 import { AuthService } from './auth.service';
 import { RegisterInput } from './dto/register.input';
 import { AuthResponse } from './entities/auth.entity';
+import { LoginInput } from './dto/login.input';
 
 @Resolver()
 export class AuthResolver {
@@ -14,5 +15,11 @@ export class AuthResolver {
       input.email,
       input.password,
     );
+  }
+
+  @Mutation(() => AuthResponse)
+  async login(@Args('input') input: LoginInput): Promise<AuthResponse> {
+    const { email, password } = input;
+    return this.authService.login(email, password);
   }
 }

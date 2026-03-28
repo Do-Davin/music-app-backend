@@ -1,18 +1,19 @@
 import { Resolver, Query } from '@nestjs/graphql';
 import { User } from './schemas/user.schema';
 import { UsersService, UserWithoutPassword } from './users.service';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @Resolver(() => User)
 export class UsersResolver {
   constructor(private readonly usersService: UsersService) {}
 
   @Query(() => User, { name: 'me' })
-  async getMe() // @CurrentUser('userId') userId: string
-  : Promise<UserWithoutPassword> {
-    // TODO: Remove mock ID once JWT auth is implemented
-    const userId = '507f1f77bcf86cd799439011';
-
+  @UseGuards(JwtAuthGuard)
+  async getMe(
+    @CurrentUser('userId') userId: string,
+  ): Promise<UserWithoutPassword> {
     const user = await this.usersService.findById(userId);
 
     if (!user) {
