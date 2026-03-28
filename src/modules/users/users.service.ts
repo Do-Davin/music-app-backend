@@ -400,4 +400,36 @@ export class UsersService {
 
     return await user.save();
   }
+
+  async verifyResetCode(email: string, code: string): Promise<boolean> {
+    this.validateEmail(email);
+
+    if (!code || code.trim().length !== 6) {
+      throw new BadRequestException('Reset code must be 6 digits');
+    }
+
+    const user = await this.userModel
+      .findOne({ email: email.toLowerCase() })
+      .exec();
+
+    if (!user) {
+      throw new NotFoundException('User with this email does not exist');
+    }
+
+    if (!user.resetCode || !user.resetCodeExpiry) {
+      throw new BadRequestException('No reset code found for this user');
+    }
+
+    // Check if code is expired
+    if (new Date() > user.resetCodeExpiry) {
+      throw new BadRequestException('Reset code has expired');
+    }
+
+    // Verify code matches
+    if (user.resetCode !== code.trim()) {
+      throw new BadRequestException('Invalid reset code');
+    }
+
+    return true;
+  }
 }
