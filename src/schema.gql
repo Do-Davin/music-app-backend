@@ -92,6 +92,11 @@ type VerifyCodeResponse {
   message: String!
 }
 
+type ResetPasswordResponse {
+  success: Boolean!
+  message: String!
+}
+
 type Query {
   hello: String!
   songs: [Song!]!
@@ -107,6 +112,7 @@ type Mutation {
   refreshToken(input: RefreshTokenInput!): AuthResponse!
   sendResetCode(input: SendResetCodeInput!): ResetCodeResponse!
   verifyCode(input: VerifyCodeInput!): VerifyCodeResponse!
+  resetPassword(input: ResetPasswordInput!): ResetPasswordResponse!
 }
 
 input RegisterInput {
@@ -131,4 +137,10 @@ input SendResetCodeInput {
 input VerifyCodeInput {
   email: String!
   code: String!
+}
+
+input ResetPasswordInput {
+  email: String!
+  code: String!
+  newPassword: String!
 }
