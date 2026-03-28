@@ -79,6 +79,12 @@ export class User {
   @Prop({ required: true })
   password: string;
 
+  @Prop()
+  resetCode?: string;
+
+  @Prop()
+  resetCodeExpiry?: Date;
+
   @Field({ nullable: true })
   @Prop()
   profileImageUrl?: string;

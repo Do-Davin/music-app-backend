@@ -82,6 +82,11 @@ type AuthResponse {
   user: User!
 }
 
+type ResetCodeResponse {
+  message: String!
+  email: String!
+}
+
 type Query {
   hello: String!
   songs: [Song!]!
@@ -95,6 +100,7 @@ type Mutation {
   register(input: RegisterInput!): AuthResponse!
   login(input: LoginInput!): AuthResponse!
   refreshToken(input: RefreshTokenInput!): AuthResponse!
+  sendResetCode(input: SendResetCodeInput!): ResetCodeResponse!
 }
 
 input RegisterInput {
@@ -110,4 +116,8 @@ input LoginInput {
 
 input RefreshTokenInput {
   refreshToken: String!
+}
+
+input SendResetCodeInput {
+  email: String!
 }

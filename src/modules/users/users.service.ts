@@ -377,4 +377,27 @@ export class UsersService {
       throw new NotFoundException(`User with ID "${userId}" not found`);
     }
   }
+
+  async generateResetCode(email: string): Promise<UserDocument> {
+    this.validateEmail(email);
+
+    const user = await this.userModel
+      .findOne({ email: email.toLowerCase() })
+      .exec();
+
+    if (!user) {
+      throw new NotFoundException('User with this email does not exist');
+    }
+
+    // Generate 6-digit code
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Set expiry to 15 minutes from now
+    const resetCodeExpiry = new Date(Date.now() + 15 * 60 * 1000);
+
+    user.resetCode = resetCode;
+    user.resetCodeExpiry = resetCodeExpiry;
+
+    return await user.save();
+  }
 }
