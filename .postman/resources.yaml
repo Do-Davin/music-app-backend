@@ -1,0 +1,6 @@
+# Use this workspace to collaborate
+workspace:
+  id: 3c84cac1-823e-4a5a-8d4e-a83118447017
+localResources:
+  specs:
+    - ../src/schema.gql
