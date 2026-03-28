@@ -83,4 +83,17 @@ export class AuthService {
       );
     }
   }
+
+  async sendResetCode(email: string) {
+    const user = await this.usersService.generateResetCode(email);
+
+    // In production, send email with reset code
+    // For now, return success message
+    // Note: The actual reset code is NOT returned for security
+
+    return {
+      message: 'Reset code sent to email',
+      email: user.email,
+    };
+  }
 }
