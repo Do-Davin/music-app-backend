@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import { RegisterInput } from './dto/register.input';
 import { AuthResponse } from './entities/auth.entity';
 import { LoginInput } from './dto/login.input';
+import { RefreshTokenInput } from './dto/refresh-token.input';
 
 @Resolver()
 export class AuthResolver {
@@ -21,5 +22,13 @@ export class AuthResolver {
   async login(@Args('input') input: LoginInput): Promise<AuthResponse> {
     const { email, password } = input;
     return this.authService.login(email, password);
+  }
+
+  @Mutation(() => AuthResponse)
+  async refreshToken(
+    @Args('input') input: RefreshTokenInput,
+  ): Promise<AuthResponse> {
+    const { refreshToken } = input;
+    return await this.authService.refreshToken(refreshToken);
   }
 }
