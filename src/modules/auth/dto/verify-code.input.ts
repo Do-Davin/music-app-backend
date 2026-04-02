@@ -3,8 +3,8 @@ import { InputType, Field } from '@nestjs/graphql';
 @InputType()
 export class VerifyCodeInput {
   @Field()
-  email: string = '';
+  email: string;
 
   @Field()
-  code: string = '';
+  code: string;
 }

@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 const { MongoClient } = require('mongodb');
+require('dotenv').config();
 
-const MONGO_URI = 'mongodb://localhost:27017/music_db';
+const MONGO_URI = process.env.MONGO_URI;
 
 const songs = [
   {

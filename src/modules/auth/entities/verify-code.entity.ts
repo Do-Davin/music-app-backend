@@ -3,8 +3,8 @@ import { ObjectType, Field } from '@nestjs/graphql';
 @ObjectType()
 export class VerifyCodeResponse {
   @Field()
-  valid: boolean = false;
+  valid: boolean;
 
   @Field()
-  message: string = '';
+  message: string;
 }

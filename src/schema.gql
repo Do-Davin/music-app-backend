@@ -116,31 +116,31 @@ type Mutation {
 }
 
 input RegisterInput {
-  username: String! = ""
-  email: String! = ""
-  password: String! = ""
+  username: String!
+  email: String!
+  password: String!
 }
 
 input LoginInput {
-  email: String! = ""
-  password: String! = ""
+  email: String!
+  password: String!
 }
 
 input RefreshTokenInput {
-  refreshToken: String! = ""
+  refreshToken: String!
 }
 
 input SendResetCodeInput {
-  email: String! = ""
+  email: String!
 }
 
 input VerifyCodeInput {
-  email: String! = ""
-  code: String! = ""
+  email: String!
+  code: String!
 }
 
 input ResetPasswordInput {
-  email: String! = ""
-  code: String! = ""
-  newPassword: String! = ""
+  email: String!
+  code: String!
+  newPassword: String!
 }
