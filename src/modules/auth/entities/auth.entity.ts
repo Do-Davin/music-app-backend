@@ -4,11 +4,11 @@ import { User } from '../../users/schemas/user.schema';
 @ObjectType()
 export class AuthResponse {
   @Field()
-  accessToken: string;
+  accessToken: string = '';
 
   @Field()
-  refreshToken: string;
+  refreshToken: string = '';
 
   @Field(() => User)
-  user: Omit<User, 'password'>;
+  user: Omit<User, 'password'> = {} as Omit<User, 'password'>;
 }

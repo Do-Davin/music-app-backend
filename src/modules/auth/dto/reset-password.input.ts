@@ -3,11 +3,11 @@ import { InputType, Field } from '@nestjs/graphql';
 @InputType()
 export class ResetPasswordInput {
   @Field()
-  email: string;
+  email: string = '';
 
   @Field()
-  code: string;
+  code: string = '';
 
   @Field()
-  newPassword: string;
+  newPassword: string = '';
 }

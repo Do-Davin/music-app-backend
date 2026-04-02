@@ -3,8 +3,8 @@ import { ObjectType, Field } from '@nestjs/graphql';
 @ObjectType()
 export class ResetPasswordResponse {
   @Field()
-  success: boolean;
+  success: boolean = false;
 
   @Field()
-  message: string;
+  message: string = '';
 }
