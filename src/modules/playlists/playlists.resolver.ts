@@ -12,9 +12,7 @@ export class PlaylistsResolver {
   }
 
   @Query(() => Playlist, { name: 'playlist' })
-  async findOne(
-    @Args('id', { type: () => ID }) id: string,
-  ): Promise<Playlist> {
+  async findOne(@Args('id', { type: () => ID }) id: string): Promise<Playlist> {
     return this.playlistsService.findOne(id);
   }
 }

@@ -11,11 +11,12 @@ import { PlaylistsModule } from './modules/playlists/playlists.module';
 import { UsersModule } from './modules/users/users.module';
 import { SongsModule } from './modules/songs/songs.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { mongoModuleAsyncOptions } from './config/mongodb.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
-    MongooseModule.forRoot(process.env.MONGO_URI as string),
+    MongooseModule.forRootAsync(mongoModuleAsyncOptions),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
