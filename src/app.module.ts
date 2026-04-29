@@ -11,6 +11,7 @@ import { PlaylistsModule } from './modules/playlists/playlists.module';
 import { UsersModule } from './modules/users/users.module';
 import { SongsModule } from './modules/songs/songs.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { PracticeSessionsModule } from './modules/practice-sessions/practice-sessions.module';
 import { mongoModuleAsyncOptions } from './config/mongodb.config';
 
 @Module({
@@ -26,6 +27,7 @@ import { mongoModuleAsyncOptions } from './config/mongodb.config';
     PlaylistsModule,
     UsersModule,
     AuthModule,
+    PracticeSessionsModule,
   ],
   controllers: [AppController],
   providers: [AppService, AppResolver],
