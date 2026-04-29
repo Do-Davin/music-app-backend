@@ -32,6 +32,8 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
     "bcryptjs": "^3.0.3",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.4",
     "graphql": "^16.13.1",
     "mongodb": "^7.1.0",
     "mongoose": "^9.3.2",

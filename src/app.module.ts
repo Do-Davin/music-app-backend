@@ -12,6 +12,7 @@ import { UsersModule } from './modules/users/users.module';
 import { SongsModule } from './modules/songs/songs.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { mongoModuleAsyncOptions } from './config/mongodb.config';
+import { ReferencesModule } from './modules/references/references.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { mongoModuleAsyncOptions } from './config/mongodb.config';
     PlaylistsModule,
     UsersModule,
     AuthModule,
+    ReferencesModule,
   ],
   controllers: [AppController],
   providers: [AppService, AppResolver],
