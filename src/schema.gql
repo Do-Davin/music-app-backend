@@ -97,6 +97,29 @@ type ResetPasswordResponse {
   message: String!
 }
 
+type KaraokeLyricLine {
+  timestamp: Float!
+  text: String!
+}
+
+type KaraokeSong {
+  _id: ID!
+  userId: ID!
+  title: String!
+  artist: String
+  source: KaraokeSongSource!
+  sourcePath: String!
+  lyrics: [KaraokeLyricLine!]!
+  duration: Float
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+enum KaraokeSongSource {
+  youtube
+  local
+}
+
 type Query {
   hello: String!
   songs: [Song!]!
@@ -104,6 +127,8 @@ type Query {
   playlists: [Playlist!]!
   playlist(id: ID!): Playlist!
   me: User!
+  karaokeHealth: String!
+  karaokeSongs: [KaraokeSong!]!
 }
 
 type Mutation {
@@ -113,6 +138,7 @@ type Mutation {
   sendResetCode(input: SendResetCodeInput!): ResetCodeResponse!
   verifyCode(input: VerifyCodeInput!): VerifyCodeResponse!
   resetPassword(input: ResetPasswordInput!): ResetPasswordResponse!
+  createKaraokeSong(input: CreateKaraokeSongInput!): KaraokeSong!
 }
 
 input RegisterInput {
@@ -143,4 +169,19 @@ input ResetPasswordInput {
   email: String!
   code: String!
   newPassword: String!
+}
+
+input CreateKaraokeSongInput {
+  userId: ID!
+  title: String!
+  artist: String
+  source: KaraokeSongSource!
+  sourcePath: String!
+  lyrics: [KaraokeLyricLineInput!]
+  duration: Float
+}
+
+input KaraokeLyricLineInput {
+  timestamp: Float!
+  text: String!
 }
