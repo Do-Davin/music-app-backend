@@ -5,7 +5,7 @@ import { Document, Types } from 'mongoose';
 @ObjectType()
 @Schema({ timestamps: true, collection: 'reference_materials' })
 export class ReferenceMaterial {
-  @Field(() => ID)
+  @Field(() => ID, { name: 'id'})
   _id: Types.ObjectId;
 
   @Field()

@@ -98,7 +98,7 @@ type ResetPasswordResponse {
 }
 
 type ReferenceMaterial {
-  _id: ID!
+  id: ID!
   title: String!
   type: String!
   description: String
