@@ -97,6 +97,18 @@ type ResetPasswordResponse {
   message: String!
 }
 
+type ReferenceMaterial {
+  _id: ID!
+  title: String!
+  type: String!
+  description: String
+  fileUrl: String
+  songId: String
+  topic: String
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
 type Query {
   hello: String!
   songs: [Song!]!
@@ -104,6 +116,8 @@ type Query {
   playlists: [Playlist!]!
   playlist(id: ID!): Playlist!
   me: User!
+  referenceMaterials(type: String): [ReferenceMaterial!]!
+  referenceMaterial(id: ID!): ReferenceMaterial!
 }
 
 type Mutation {
@@ -113,6 +127,9 @@ type Mutation {
   sendResetCode(input: SendResetCodeInput!): ResetCodeResponse!
   verifyCode(input: VerifyCodeInput!): VerifyCodeResponse!
   resetPassword(input: ResetPasswordInput!): ResetPasswordResponse!
+  createReferenceMaterial(input: CreateReferenceMaterialInput!): ReferenceMaterial!
+  updateReferenceMaterial(id: ID!, input: UpdateReferenceMaterialInput!): ReferenceMaterial!
+  deleteReferenceMaterial(id: ID!): Boolean!
 }
 
 input RegisterInput {
@@ -143,4 +160,22 @@ input ResetPasswordInput {
   email: String!
   code: String!
   newPassword: String!
+}
+
+input CreateReferenceMaterialInput {
+  title: String!
+  type: String!
+  description: String
+  fileUrl: String
+  songId: String
+  topic: String
+}
+
+input UpdateReferenceMaterialInput {
+  title: String
+  type: String
+  description: String
+  fileUrl: String
+  songId: String
+  topic: String
 }
