@@ -109,6 +109,29 @@ type ReferenceMaterial {
   updatedAt: DateTime
 }
 
+type KaraokeLyricLine {
+  timestamp: Float!
+  text: String!
+}
+
+type KaraokeSong {
+  _id: ID!
+  userId: ID!
+  title: String!
+  artist: String
+  source: KaraokeSongSource!
+  sourcePath: String!
+  lyrics: [KaraokeLyricLine!]!
+  duration: Float
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+enum KaraokeSongSource {
+  youtube
+  local
+}
+
 type Query {
   hello: String!
   songs: [Song!]!
@@ -118,6 +141,8 @@ type Query {
   me: User!
   referenceMaterials(type: String): [ReferenceMaterial!]!
   referenceMaterial(id: ID!): ReferenceMaterial!
+  karaokeHealth: String!
+  karaokeSongs: [KaraokeSong!]!
 }
 
 type Mutation {
@@ -130,6 +155,7 @@ type Mutation {
   createReferenceMaterial(input: CreateReferenceMaterialInput!): ReferenceMaterial!
   updateReferenceMaterial(id: ID!, input: UpdateReferenceMaterialInput!): ReferenceMaterial!
   deleteReferenceMaterial(id: ID!): Boolean!
+  createKaraokeSong(input: CreateKaraokeSongInput!): KaraokeSong!
 }
 
 input RegisterInput {
@@ -178,4 +204,19 @@ input UpdateReferenceMaterialInput {
   fileUrl: String
   songId: String
   topic: String
+}
+
+input CreateKaraokeSongInput {
+  userId: ID!
+  title: String!
+  artist: String
+  source: KaraokeSongSource!
+  sourcePath: String!
+  lyrics: [KaraokeLyricLineInput!]
+  duration: Float
+}
+
+input KaraokeLyricLineInput {
+  timestamp: Float!
+  text: String!
 }
