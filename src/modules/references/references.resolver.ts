@@ -1,6 +1,6 @@
 import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
-import { ReferenceMaterial } from './schemas/reference-material.schema';
 import { ReferencesService } from './references.service';
+import { ReferenceMaterial } from './schemas/reference-material.schema';
 import { CreateReferenceMaterialInput } from './dto/create-reference-material.input';
 import { UpdateReferenceMaterialInput } from './dto/update-reference-material.input';
 
@@ -16,9 +16,7 @@ export class ReferencesResolver {
   }
 
   @Query(() => ReferenceMaterial, { name: 'referenceMaterial' })
-  async findOne(
-    @Args('id', { type: () => ID }) id: string,
-  ): Promise<ReferenceMaterial> {
+  async findOne(@Args('id', { type: () => ID }) id: string): Promise<ReferenceMaterial> {
     return this.referencesService.findOne(id);
   }
 

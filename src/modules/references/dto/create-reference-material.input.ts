@@ -1,4 +1,6 @@
 import { InputType, Field } from '@nestjs/graphql';
+import GraphQLUpload from 'graphql-upload/GraphQLUpload.mjs';
+import type { FileUpload } from 'graphql-upload/processRequest.mjs';
 
 @InputType()
 export class CreateReferenceMaterialInput {
@@ -11,8 +13,8 @@ export class CreateReferenceMaterialInput {
   @Field({ nullable: true })
   description?: string;
 
-  @Field({ nullable: true })
-  fileUrl?: string;
+  @Field(() => GraphQLUpload, { nullable: true })
+  file?: Promise<FileUpload>;
 
   @Field({ nullable: true })
   songId?: string;
