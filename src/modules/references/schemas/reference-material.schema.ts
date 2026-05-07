@@ -1,14 +1,14 @@
 import { ObjectType, Field, ID } from '@nestjs/graphql';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 export type ReferenceMaterialDocument = ReferenceMaterial & Document;
 
 @ObjectType()
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, collection: 'reference_materials' })
 export class ReferenceMaterial {
   @Field(() => ID)
-  _id: string;
+  _id: Types.ObjectId;
 
   @Field()
   @Prop({ required: true })
@@ -28,6 +28,11 @@ export class ReferenceMaterial {
   @Field({ nullable: true })
   @Prop()
   filePath?: string;
+
+  @Field(() => String, { nullable: true })
+  get fileUrl(): string | null {
+    return this.filePath ? this.filePath : null;
+  }
 
   @Field({ nullable: true })
   @Prop()
@@ -49,10 +54,10 @@ export class ReferenceMaterial {
   @Prop()
   topic?: string;
 
-  @Field()
+  @Field({ nullable: true })
   createdAt: Date;
-
-  @Field()
+  
+  @Field({ nullable: true })
   updatedAt: Date;
 }
 

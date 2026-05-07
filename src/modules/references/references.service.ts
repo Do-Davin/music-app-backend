@@ -29,7 +29,6 @@ export class ReferencesService {
   async create(input: CreateReferenceMaterialInput): Promise<ReferenceMaterialDocument> {
     let fileData = {};
 
-    // CHANGED: Handle file upload
     if (input.file) {
       const uploadedFile = await FileUploadUtil.saveFile(input.file);
       fileData = {
@@ -56,7 +55,6 @@ export class ReferencesService {
     const material = await this.findOne(id);
     let fileData = {};
 
-    // CHANGED: Handle file replacement
     if (input.file) {
       // Delete old file if exists
       if (material.filePath) {
@@ -72,10 +70,16 @@ export class ReferencesService {
       };
     }
 
-    Object.assign(material, {
-      ...input,
-      ...fileData,
-    });
+    // Surgical update to avoid passing the file promise to the model
+    if (input.title !== undefined) material.title = input.title;
+    if (input.type !== undefined) material.type = input.type;
+    if (input.description !== undefined) material.description = input.description;
+    if (input.songId !== undefined) material.songId = input.songId;
+    if (input.topic !== undefined) material.topic = input.topic;
+
+    if (Object.keys(fileData).length > 0) {
+      Object.assign(material, fileData);
+    }
 
     return material.save();
   }

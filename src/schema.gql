@@ -103,13 +103,14 @@ type ReferenceMaterial {
   type: String!
   description: String
   filePath: String
+  fileUrl: String
   fileName: String
   fileSize: Float
   mimeType: String
   songId: String
   topic: String
-  createdAt: DateTime!
-  updatedAt: DateTime!
+  createdAt: DateTime
+  updatedAt: DateTime
 }
 
 type Query {
