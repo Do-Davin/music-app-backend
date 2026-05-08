@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Song, SongDocument } from './schemas/song.schema';
 
 @Injectable()
@@ -17,5 +17,17 @@ export class SongsService {
       throw new NotFoundException(`Song with ID "${id}" not found`);
     }
     return song;
+  }
+
+  async findManyByIds(ids: Types.ObjectId[]): Promise<Song[]> {
+    if (!ids.length) return [];
+
+    const songs = await this.songModel
+      .find({ _id: { $in: ids } })
+      .lean()
+      .exec();
+
+    const byId = new Map(songs.map((s) => [String(s._id), s]));
+    return ids.map((id) => byId.get(String(id))).filter(Boolean) as Song[];
   }
 }

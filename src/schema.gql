@@ -97,26 +97,6 @@ type ResetPasswordResponse {
   message: String!
 }
 
-type PracticeSession {
-  _id: ID!
-  title: String!
-  practiceDate: String!
-  duration: Int!
-  focusArea: FocusArea!
-  notes: String
-  rating: Int!
-  createdAt: DateTime
-  updatedAt: DateTime
-}
-
-enum FocusArea {
-  GENERAL
-  KARAOKE
-  VOCAL
-  TIMING
-  LYRICS
-}
-
 type Query {
   hello: String!
   songs: [Song!]!
@@ -124,20 +104,19 @@ type Query {
   playlists: [Playlist!]!
   playlist(id: ID!): Playlist!
   me: User!
-  practiceSessions: [PracticeSession!]!
-  practiceSession(id: ID!): PracticeSession!
+  likedSongs: [Song!]!
 }
 
 type Mutation {
+  likeSong(songId: ID!): User!
+  unlikeSong(songId: ID!): User!
+  toggleLikeSong(songId: ID!): User!
   register(input: RegisterInput!): AuthResponse!
   login(input: LoginInput!): AuthResponse!
   refreshToken(input: RefreshTokenInput!): AuthResponse!
   sendResetCode(input: SendResetCodeInput!): ResetCodeResponse!
   verifyCode(input: VerifyCodeInput!): VerifyCodeResponse!
   resetPassword(input: ResetPasswordInput!): ResetPasswordResponse!
-  createPracticeSession(input: CreatePracticeSessionInput!): PracticeSession!
-  updatePracticeSession(id: ID!, input: UpdatePracticeSessionInput!): PracticeSession!
-  deletePracticeSession(id: ID!): Boolean!
 }
 
 input RegisterInput {
@@ -168,22 +147,4 @@ input ResetPasswordInput {
   email: String!
   code: String!
   newPassword: String!
-}
-
-input CreatePracticeSessionInput {
-  title: String!
-  practiceDate: DateTime!
-  duration: Int!
-  focusArea: FocusArea!
-  notes: String
-  rating: Int!
-}
-
-input UpdatePracticeSessionInput {
-  title: String
-  practiceDate: DateTime
-  duration: Int
-  focusArea: FocusArea
-  notes: String
-  rating: Int
 }

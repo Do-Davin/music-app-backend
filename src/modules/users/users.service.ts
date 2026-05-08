@@ -193,6 +193,33 @@ export class UsersService {
     return this.stripPassword(updatedUser);
   }
 
+  async getLikedSongs(userId: string): Promise<Types.ObjectId[]> {
+    this.validateObjectId(userId, 'User ID');
+
+    const user = await this.userModel.findById(userId).exec();
+    if (!user) {
+      throw new NotFoundException(`User with ID "${userId}" not found`);
+    }
+
+    return user.likedSongIds ?? [];
+  }
+
+  async isSongLiked(userId: string, songId: string): Promise<boolean> {
+    this.validateObjectId(userId, 'User ID');
+    this.validateObjectId(songId, 'Song ID');
+
+    const user = await this.userModel
+      .findById(userId, { likedSongIds: 1 })
+      .lean()
+      .exec();
+
+    if (!user) {
+      throw new NotFoundException(`User with ID "${userId}" not found`);
+    }
+
+    return (user.likedSongIds ?? []).some((id) => String(id) === songId);
+  }
+
   async addRecentlyPlayed(
     userId: string,
     songId: string,
