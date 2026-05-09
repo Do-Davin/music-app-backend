@@ -22,6 +22,7 @@ import { ReferencesModule } from './modules/references/references.module';
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
       playground: true,
+      csrfPrevention: false,
     }),
     SongsModule,
     PlaylistsModule,

@@ -17,7 +17,7 @@ export class ReferenceMaterial {
   @Field()
   @Prop({ 
     required: true, 
-    enum: ['PDF', 'PPT', 'Sheet Music', 'Note', 'Other'] 
+    enum: ['PDF', 'PPT', 'PTT', 'Sheet Music', 'Note', 'Doc', 'Other'] 
   })
   type: string;
 
