@@ -31,7 +31,9 @@ export class ReferenceMaterial {
 
   @Field(() => String, { nullable: true })
   get fileUrl(): string | null {
-    return this.filePath ? this.filePath : null;
+    if (!this.filePath) return null;
+    // Make sure it returns full URL
+    return `${process.env.BASE_URL || 'http://localhost:3000'}${this.filePath.startsWith('/') ? '' : '/'}${this.filePath}`;
   }
 
   @Field({ nullable: true })
