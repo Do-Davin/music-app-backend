@@ -2,15 +2,35 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-type Playlist {
+type Song {
   _id: ID!
-  name: String!
-  description: String
+  title: String!
+  artist: String!
+  albumName: String
+  duration: Int
+  key: String
+  tempo: Int
+  difficulty: String
+  tags: [String!]
+  source: SongSource
+  sourcePath: String
+  fileUrl: String
+  videoUrl: String
   coverImageUrl: String
-  songIds: [ID!]
+  lyrics: String
+  chordNotationStyle: String
   isPublic: Boolean
+  playCount: Int
+  lastPlayedAt: DateTime
+  userId: ID!
   createdAt: DateTime
   updatedAt: DateTime
+}
+
+"""The source type of the song audio"""
+enum SongSource {
+  mp3
+  youtube
 }
 
 """
@@ -54,24 +74,15 @@ type User {
   updatedAt: DateTime
 }
 
-type Song {
+type Playlist {
   _id: ID!
-  title: String!
-  artist: String!
-  albumName: String
-  duration: Int!
-  key: String
-  tempo: Int
-  difficulty: String
-  tags: [String!]
-  fileUrl: String
-  videoUrl: String
+  userId: ID!
+  name: String!
+  description: String
   coverImageUrl: String
-  lyrics: String
-  chordNotationStyle: String
+  songIds: [ID!]
+  songs: [Song!]!
   isPublic: Boolean
-  playCount: Int
-  lastPlayedAt: DateTime
   createdAt: DateTime
   updatedAt: DateTime
 }
@@ -136,7 +147,9 @@ type Query {
   hello: String!
   songs: [Song!]!
   song(id: ID!): Song!
+  mySongs: [Song!]!
   playlists: [Playlist!]!
+  myPlaylists: [Playlist!]!
   playlist(id: ID!): Playlist!
   me: User!
   referenceMaterials(type: String): [ReferenceMaterial!]!
@@ -146,6 +159,14 @@ type Query {
 }
 
 type Mutation {
+  createSong(createSongInput: CreateSongInput!): Song!
+  updateSong(updateSongInput: UpdateSongInput!): Song!
+  removeSong(id: ID!): Boolean!
+  createPlaylist(createPlaylistInput: CreatePlaylistInput!): Playlist!
+  updatePlaylist(updatePlaylistInput: UpdatePlaylistInput!): Playlist!
+  removePlaylist(id: ID!): Boolean!
+  addSongToPlaylist(playlistId: ID!, songId: ID!): Playlist!
+  removeSongFromPlaylist(playlistId: ID!, songId: ID!): Playlist!
   register(input: RegisterInput!): AuthResponse!
   login(input: LoginInput!): AuthResponse!
   refreshToken(input: RefreshTokenInput!): AuthResponse!
@@ -156,6 +177,62 @@ type Mutation {
   updateReferenceMaterial(id: ID!, input: UpdateReferenceMaterialInput!): ReferenceMaterial!
   deleteReferenceMaterial(id: ID!): Boolean!
   createKaraokeSong(input: CreateKaraokeSongInput!): KaraokeSong!
+}
+
+input CreateSongInput {
+  title: String!
+  artist: String!
+  albumName: String
+  duration: Int
+  key: String
+  tempo: Int
+  difficulty: String
+  tags: [String!]
+  source: SongSource
+  sourcePath: String
+  fileUrl: String
+  videoUrl: String
+  coverImageUrl: String
+  lyrics: String
+  chordNotationStyle: String
+  isPublic: Boolean = false
+}
+
+input UpdateSongInput {
+  title: String
+  artist: String
+  albumName: String
+  duration: Int
+  key: String
+  tempo: Int
+  difficulty: String
+  tags: [String!]
+  source: SongSource
+  sourcePath: String
+  fileUrl: String
+  videoUrl: String
+  coverImageUrl: String
+  lyrics: String
+  chordNotationStyle: String
+  isPublic: Boolean = false
+  id: ID!
+}
+
+input CreatePlaylistInput {
+  name: String!
+  description: String
+  coverImageUrl: String
+  isPublic: Boolean = false
+  songIds: [ID!]
+}
+
+input UpdatePlaylistInput {
+  name: String
+  description: String
+  coverImageUrl: String
+  isPublic: Boolean = false
+  songIds: [ID!]
+  id: ID!
 }
 
 input RegisterInput {
