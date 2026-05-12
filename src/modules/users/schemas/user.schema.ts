@@ -68,9 +68,9 @@ export class User {
   @Field(() => ID)
   _id: Types.ObjectId;
 
-  @Field()
-  @Prop({ required: true, unique: true })
-  username: string;
+  @Field({ nullable: true })
+  @Prop({ unique: true, sparse: true })
+  username?: string;
 
   @Field()
   @Prop({ required: true, unique: true })
@@ -89,9 +89,23 @@ export class User {
   @Prop()
   profileImageUrl?: string;
 
+  // TODO: prevent infinite
   @Field(() => [ID], { nullable: true })
   @Prop({ type: [Types.ObjectId], ref: 'Song', default: [] })
   likedSongIds: Types.ObjectId[];
+
+  // TODO: add friendship table
+  @Field(() => [ID], { nullable: true })
+  @Prop({ type: [String], default: [] })
+  friendIds: string[];
+
+  @Field(() => [ID], { nullable: true })
+  @Prop({ type: [String], default: [] })
+  incomingFriendRequestIds: string[];
+
+  @Field(() => [ID], { nullable: true })
+  @Prop({ type: [String], default: [] })
+  outgoingFriendRequestIds: string[];
 
   @Field(() => [RecentlyPlayed], { nullable: true })
   @Prop({

@@ -36,7 +36,11 @@ export class AuthService {
     };
   }
 
-  async register(username: string, email: string, password: string) {
+  async register(
+    username: string | undefined,
+    email: string,
+    password: string,
+  ) {
     const user = await this.usersService.create(username, email, password);
 
     const payload: JwtPayload = {
