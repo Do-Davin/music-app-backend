@@ -112,11 +112,15 @@ type ResetPasswordResponse {
 }
 
 type ReferenceMaterial {
-  id: ID!
+  _id: ID!
   title: String!
   type: String!
   description: String
+  filePath: String
   fileUrl: String
+  fileName: String
+  fileSize: Float
+  mimeType: String
   songId: String
   topic: String
   createdAt: DateTime
@@ -280,16 +284,19 @@ input CreateReferenceMaterialInput {
   title: String!
   type: String!
   description: String
-  fileUrl: String
+  file: Upload
   songId: String
   topic: String
 }
+
+"""The `Upload` scalar type represents a file upload."""
+scalar Upload
 
 input UpdateReferenceMaterialInput {
   title: String
   type: String
   description: String
-  fileUrl: String
+  file: Upload
   songId: String
   topic: String
 }

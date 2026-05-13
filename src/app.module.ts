@@ -23,6 +23,7 @@ import { KaraokeModule } from './modules/karaoke/karaoke.module';
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
       playground: true,
+      csrfPrevention: false,
     }),
     SongsModule,
     PlaylistsModule,
