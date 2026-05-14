@@ -33,6 +33,10 @@ export class UsersService {
     }
   }
 
+  private escapeRegex(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
   // Helper: Validate email format
   private validateEmail(email: string): void {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -52,12 +56,14 @@ export class UsersService {
 
   // Create new user with validation and duplicate checking
   async create(
-    username: string,
+    username: string | undefined,
     email: string,
     password: string,
   ): Promise<UserWithoutPassword> {
     // Validation
-    if (!username || username.trim().length < 3) {
+    const trimmedUsername = username?.trim();
+
+    if (trimmedUsername !== undefined && trimmedUsername.length < 3) {
       throw new BadRequestException(
         'Username must be at least 3 characters long',
       );
@@ -68,7 +74,10 @@ export class UsersService {
     // Check for existing user
     const existingUser = await this.userModel
       .findOne({
-        $or: [{ email: email.toLowerCase() }, { username }],
+        $or: [
+          { email: email.toLowerCase() },
+          ...(trimmedUsername ? [{ username: trimmedUsername }] : []),
+        ],
       })
       .exec();
 
@@ -76,7 +85,7 @@ export class UsersService {
       if (existingUser.email === email.toLowerCase()) {
         throw new ConflictException('Email already registered');
       }
-      if (existingUser.username === username) {
+      if (trimmedUsername && existingUser.username === trimmedUsername) {
         throw new ConflictException('Username already taken');
       }
     }
@@ -85,7 +94,7 @@ export class UsersService {
       const hashedPassword: string = await bcrypt.hash(password, 10);
 
       const newUser = new this.userModel({
-        username: username.trim(),
+        ...(trimmedUsername ? { username: trimmedUsername } : {}),
         email: email.toLowerCase().trim(),
         password: hashedPassword,
       });
@@ -109,6 +118,218 @@ export class UsersService {
   async findById(id: string): Promise<UserDocument | null> {
     this.validateObjectId(id, 'User ID');
     return this.userModel.findById(id).exec();
+  }
+
+  async findUsersByUsernameOrEmail(
+    search: string,
+  ): Promise<UserWithoutPassword[]> {
+    const trimmedSearch = search.trim();
+
+    if (!trimmedSearch) {
+      throw new BadRequestException('Search cannot be empty');
+    }
+
+    const searchRegex = new RegExp(this.escapeRegex(trimmedSearch), 'i');
+    const users = await this.userModel
+      .find({
+        $or: [{ username: searchRegex }, { email: searchRegex }],
+      })
+      .limit(20)
+      .exec();
+
+    return users.map((user) => this.stripPassword(user));
+  }
+
+  async sendFriendRequest(
+    currentUserId: string,
+    targetUserId: string,
+  ): Promise<boolean> {
+    this.validateObjectId(currentUserId, 'Current user ID');
+    this.validateObjectId(targetUserId, 'Target user ID');
+
+    if (currentUserId === targetUserId) {
+      throw new BadRequestException('Cannot send friend request to yourself');
+    }
+
+    const [currentUser, targetUser] = await Promise.all([
+      this.userModel.findById(currentUserId).exec(),
+      this.userModel.findById(targetUserId).exec(),
+    ]);
+
+    if (!currentUser) {
+      throw new NotFoundException(`User with ID "${currentUserId}" not found`);
+    }
+    if (!targetUser) {
+      throw new NotFoundException(`User with ID "${targetUserId}" not found`);
+    }
+
+    if (
+      currentUser.friendIds?.includes(targetUserId) ||
+      targetUser.friendIds?.includes(currentUserId)
+    ) {
+      throw new ConflictException('Users are already friends');
+    }
+    if (
+      currentUser.outgoingFriendRequestIds?.includes(targetUserId) ||
+      targetUser.incomingFriendRequestIds?.includes(currentUserId)
+    ) {
+      throw new ConflictException('Friend request already sent');
+    }
+    if (currentUser.incomingFriendRequestIds?.includes(targetUserId)) {
+      throw new ConflictException('User already sent you a friend request');
+    }
+
+    await Promise.all([
+      this.userModel
+        .findByIdAndUpdate(currentUserId, {
+          $addToSet: { outgoingFriendRequestIds: targetUserId },
+        })
+        .exec(),
+      this.userModel
+        .findByIdAndUpdate(targetUserId, {
+          $addToSet: { incomingFriendRequestIds: currentUserId },
+        })
+        .exec(),
+    ]);
+
+    return true;
+  }
+
+  async acceptFriendRequest(
+    currentUserId: string,
+    requesterUserId: string,
+  ): Promise<boolean> {
+    this.validateObjectId(currentUserId, 'Current user ID');
+    this.validateObjectId(requesterUserId, 'Requester user ID');
+
+    const [currentUser, requesterUser] = await Promise.all([
+      this.userModel.findById(currentUserId).exec(),
+      this.userModel.findById(requesterUserId).exec(),
+    ]);
+
+    if (!currentUser) {
+      throw new NotFoundException(`User with ID "${currentUserId}" not found`);
+    }
+    if (!requesterUser) {
+      throw new NotFoundException(
+        `User with ID "${requesterUserId}" not found`,
+      );
+    }
+    if (!currentUser.incomingFriendRequestIds?.includes(requesterUserId)) {
+      throw new BadRequestException('No incoming friend request found');
+    }
+
+    await Promise.all([
+      this.userModel
+        .findByIdAndUpdate(currentUserId, {
+          $addToSet: { friendIds: requesterUserId },
+          $pull: { incomingFriendRequestIds: requesterUserId },
+        })
+        .exec(),
+      this.userModel
+        .findByIdAndUpdate(requesterUserId, {
+          $addToSet: { friendIds: currentUserId },
+          $pull: { outgoingFriendRequestIds: currentUserId },
+        })
+        .exec(),
+    ]);
+
+    return true;
+  }
+
+  async rejectFriendRequest(
+    currentUserId: string,
+    requesterUserId: string,
+  ): Promise<boolean> {
+    this.validateObjectId(currentUserId, 'Current user ID');
+    this.validateObjectId(requesterUserId, 'Requester user ID');
+
+    await Promise.all([
+      this.userModel
+        .findByIdAndUpdate(currentUserId, {
+          $pull: { incomingFriendRequestIds: requesterUserId },
+        })
+        .exec(),
+      this.userModel
+        .findByIdAndUpdate(requesterUserId, {
+          $pull: { outgoingFriendRequestIds: currentUserId },
+        })
+        .exec(),
+    ]);
+
+    return true;
+  }
+
+  async cancelFriendRequest(
+    currentUserId: string,
+    targetUserId: string,
+  ): Promise<boolean> {
+    this.validateObjectId(currentUserId, 'Current user ID');
+    this.validateObjectId(targetUserId, 'Target user ID');
+
+    await Promise.all([
+      this.userModel
+        .findByIdAndUpdate(currentUserId, {
+          $pull: { outgoingFriendRequestIds: targetUserId },
+        })
+        .exec(),
+      this.userModel
+        .findByIdAndUpdate(targetUserId, {
+          $pull: { incomingFriendRequestIds: currentUserId },
+        })
+        .exec(),
+    ]);
+
+    return true;
+  }
+
+  async getFriends(currentUserId: string): Promise<UserWithoutPassword[]> {
+    this.validateObjectId(currentUserId, 'Current user ID');
+
+    const currentUser = await this.userModel.findById(currentUserId).exec();
+    if (!currentUser) {
+      throw new NotFoundException(`User with ID "${currentUserId}" not found`);
+    }
+
+    const users = await this.userModel
+      .find({ _id: { $in: currentUser.friendIds ?? [] } })
+      .exec();
+
+    return users.map((user) => this.stripPassword(user));
+  }
+
+  async getIncomingFriendRequests(
+    currentUserId: string,
+  ): Promise<UserWithoutPassword[]> {
+    this.validateObjectId(currentUserId, 'Current user ID');
+
+    const currentUser = await this.userModel.findById(currentUserId).exec();
+    if (!currentUser) {
+      throw new NotFoundException(`User with ID "${currentUserId}" not found`);
+    }
+
+    const users = await this.userModel
+      .find({ _id: { $in: currentUser.incomingFriendRequestIds ?? [] } })
+      .exec();
+
+    return users.map((user) => this.stripPassword(user));
+  }
+
+  async getOutgoingFriendRequests(
+    currentUserId: string,
+  ): Promise<UserWithoutPassword[]> {
+    this.validateObjectId(currentUserId, 'Current user ID');
+
+    const currentUser = await this.userModel.findById(currentUserId).exec();
+    if (!currentUser) {
+      throw new NotFoundException(`User with ID "${currentUserId}" not found`);
+    }
+
+    const users = await this.userModel
+      .find({ _id: { $in: currentUser.outgoingFriendRequestIds ?? [] } })
+      .exec();
+
+    return users.map((user) => this.stripPassword(user));
   }
 
   async validateUser(

@@ -7,11 +7,20 @@ type Song {
   title: String!
   artist: String!
   albumName: String
+<<<<<<< HEAD
   duration: Int!
+=======
+  duration: Int
+>>>>>>> 047c594fedd01f975aa8e04442359535d83cd7f3
   key: String
   tempo: Int
   difficulty: String
   tags: [String!]
+<<<<<<< HEAD
+=======
+  source: SongSource
+  sourcePath: String
+>>>>>>> 047c594fedd01f975aa8e04442359535d83cd7f3
   fileUrl: String
   videoUrl: String
   coverImageUrl: String
@@ -20,8 +29,18 @@ type Song {
   isPublic: Boolean
   playCount: Int
   lastPlayedAt: DateTime
+<<<<<<< HEAD
+=======
+  userId: ID!
+>>>>>>> 047c594fedd01f975aa8e04442359535d83cd7f3
   createdAt: DateTime
   updatedAt: DateTime
+}
+
+"""The source type of the song audio"""
+enum SongSource {
+  mp3
+  youtube
 }
 
 """
@@ -66,10 +85,13 @@ type RecentlyPlayed {
 
 type User {
   _id: ID!
-  username: String!
+  username: String
   email: String!
   profileImageUrl: String
   likedSongIds: [ID!]
+  friendIds: [ID!]
+  incomingFriendRequestIds: [ID!]
+  outgoingFriendRequestIds: [ID!]
   recentlyPlayed: [RecentlyPlayed!]
   practiceGoals: PracticeGoals
   practiceStreak: PracticeStreak
@@ -78,6 +100,22 @@ type User {
   updatedAt: DateTime
 }
 
+<<<<<<< HEAD
+=======
+type Playlist {
+  _id: ID!
+  userId: ID!
+  name: String!
+  description: String
+  coverImageUrl: String
+  songIds: [ID!]
+  songs: [Song!]!
+  isPublic: Boolean
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+>>>>>>> 047c594fedd01f975aa8e04442359535d83cd7f3
 type AuthResponse {
   accessToken: String!
   refreshToken: String!
@@ -99,14 +137,56 @@ type ResetPasswordResponse {
   message: String!
 }
 
+type ReferenceMaterial {
+  _id: ID!
+  title: String!
+  type: String!
+  description: String
+  filePath: String
+  fileUrl: String
+  fileName: String
+  fileSize: Float
+  mimeType: String
+  songId: String
+  topic: String
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+type KaraokeLyricLine {
+  timestamp: Float!
+  text: String!
+}
+
+type KaraokeSong {
+  _id: ID!
+  userId: ID!
+  title: String!
+  artist: String
+  source: KaraokeSongSource!
+  sourcePath: String!
+  lyrics: [KaraokeLyricLine!]!
+  duration: Float
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+enum KaraokeSongSource {
+  youtube
+  local
+}
+
 type Query {
   hello: String!
   songs: [Song!]!
   song(id: ID!): Song!
+  mySongs: [Song!]!
   playlists: [Playlist!]!
+  myPlaylists: [Playlist!]!
   playlist(id: ID!): Playlist!
   likedSongsPlaylist: Playlist!
   me: User!
+<<<<<<< HEAD
   likedSongs: [Song!]!
 }
 
@@ -114,16 +194,101 @@ type Mutation {
   likeSong(songId: ID!): User!
   unlikeSong(songId: ID!): User!
   toggleLikeSong(songId: ID!): User!
+=======
+  searchUsers(search: String!): [User!]!
+  myFriends: [User!]!
+  incomingFriendRequests: [User!]!
+  outgoingFriendRequests: [User!]!
+  referenceMaterials(type: String): [ReferenceMaterial!]!
+  referenceMaterial(id: ID!): ReferenceMaterial!
+  karaokeHealth: String!
+  karaokeSongs: [KaraokeSong!]!
+}
+
+type Mutation {
+  createSong(createSongInput: CreateSongInput!): Song!
+  updateSong(updateSongInput: UpdateSongInput!): Song!
+  removeSong(id: ID!): Boolean!
+  createPlaylist(createPlaylistInput: CreatePlaylistInput!): Playlist!
+  updatePlaylist(updatePlaylistInput: UpdatePlaylistInput!): Playlist!
+  removePlaylist(id: ID!): Boolean!
+  addSongToPlaylist(playlistId: ID!, songId: ID!): Playlist!
+  removeSongFromPlaylist(playlistId: ID!, songId: ID!): Playlist!
+  sendFriendRequest(userId: ID!): Boolean!
+  acceptFriendRequest(userId: ID!): Boolean!
+  rejectFriendRequest(userId: ID!): Boolean!
+  cancelFriendRequest(userId: ID!): Boolean!
+>>>>>>> 047c594fedd01f975aa8e04442359535d83cd7f3
   register(input: RegisterInput!): AuthResponse!
   login(input: LoginInput!): AuthResponse!
   refreshToken(input: RefreshTokenInput!): AuthResponse!
   sendResetCode(input: SendResetCodeInput!): ResetCodeResponse!
   verifyCode(input: VerifyCodeInput!): VerifyCodeResponse!
   resetPassword(input: ResetPasswordInput!): ResetPasswordResponse!
+  createReferenceMaterial(input: CreateReferenceMaterialInput!): ReferenceMaterial!
+  updateReferenceMaterial(id: ID!, input: UpdateReferenceMaterialInput!): ReferenceMaterial!
+  deleteReferenceMaterial(id: ID!): Boolean!
+  createKaraokeSong(input: CreateKaraokeSongInput!): KaraokeSong!
+}
+
+input CreateSongInput {
+  title: String!
+  artist: String!
+  albumName: String
+  duration: Int
+  key: String
+  tempo: Int
+  difficulty: String
+  tags: [String!]
+  source: SongSource
+  sourcePath: String
+  fileUrl: String
+  videoUrl: String
+  coverImageUrl: String
+  lyrics: String
+  chordNotationStyle: String
+  isPublic: Boolean = false
+}
+
+input UpdateSongInput {
+  title: String
+  artist: String
+  albumName: String
+  duration: Int
+  key: String
+  tempo: Int
+  difficulty: String
+  tags: [String!]
+  source: SongSource
+  sourcePath: String
+  fileUrl: String
+  videoUrl: String
+  coverImageUrl: String
+  lyrics: String
+  chordNotationStyle: String
+  isPublic: Boolean = false
+  id: ID!
+}
+
+input CreatePlaylistInput {
+  name: String!
+  description: String
+  coverImageUrl: String
+  isPublic: Boolean = false
+  songIds: [ID!]
+}
+
+input UpdatePlaylistInput {
+  name: String
+  description: String
+  coverImageUrl: String
+  isPublic: Boolean = false
+  songIds: [ID!]
+  id: ID!
 }
 
 input RegisterInput {
-  username: String!
+  username: String
   email: String!
   password: String!
 }
@@ -150,4 +315,40 @@ input ResetPasswordInput {
   email: String!
   code: String!
   newPassword: String!
+}
+
+input CreateReferenceMaterialInput {
+  title: String!
+  type: String!
+  description: String
+  file: Upload
+  songId: String
+  topic: String
+}
+
+"""The `Upload` scalar type represents a file upload."""
+scalar Upload
+
+input UpdateReferenceMaterialInput {
+  title: String
+  type: String
+  description: String
+  file: Upload
+  songId: String
+  topic: String
+}
+
+input CreateKaraokeSongInput {
+  userId: ID!
+  title: String!
+  artist: String
+  source: KaraokeSongSource!
+  sourcePath: String!
+  lyrics: [KaraokeLyricLineInput!]
+  duration: Float
+}
+
+input KaraokeLyricLineInput {
+  timestamp: Float!
+  text: String!
 }

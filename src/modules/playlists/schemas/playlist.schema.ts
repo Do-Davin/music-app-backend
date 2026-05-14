@@ -13,6 +13,10 @@ export class Playlist {
   @Prop({ type: Types.ObjectId, ref: 'User' })
   ownerId?: Types.ObjectId;
 
+  @Field(() => ID)
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  userId: Types.ObjectId;
+
   @Field()
   @Prop({ required: true })
   name!: string;
@@ -32,6 +36,9 @@ export class Playlist {
   // GraphQL-only field (resolved in resolver)
   @Field(() => [Song], { nullable: true })
   songs?: Song[];
+
+  @Field(() => [Song], { nullable: true })
+  songs: Song[];
 
   @Field({ nullable: true, defaultValue: false })
   @Prop({ default: false })

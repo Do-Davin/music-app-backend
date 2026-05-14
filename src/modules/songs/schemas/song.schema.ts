@@ -1,6 +1,22 @@
-import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
+import {
+  ObjectType,
+  Field,
+  ID,
+  Int,
+  registerEnumType,
+} from '@nestjs/graphql';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+
+export enum SongSource {
+  mp3 = 'mp3',
+  youtube = 'youtube',
+}
+
+registerEnumType(SongSource, {
+  name: 'SongSource',
+  description: 'The source type of the song audio',
+});
 
 @ObjectType()
 @Schema({ timestamps: true })
@@ -20,8 +36,8 @@ export class Song {
   @Prop()
   albumName: string;
 
-  @Field(() => Int)
-  @Prop({ required: true })
+  @Field(() => Int, { nullable: true })
+  @Prop()
   duration: number;
 
   @Field({ nullable: true })
@@ -40,10 +56,27 @@ export class Song {
   @Prop({ type: [String] })
   tags: string[];
 
+  /**
+   * How the audio is provided: 'mp3' (uploaded file URL) or 'youtube' (YouTube link).
+   */
+  @Field(() => SongSource, { nullable: true })
+  @Prop({ enum: SongSource })
+  source: SongSource;
+
+  /**
+   * For 'mp3': the stored file URL (e.g. /uploads/songs/my-song.mp3).
+   * For 'youtube': the full YouTube URL or video ID.
+   */
+  @Field({ nullable: true })
+  @Prop()
+  sourcePath: string;
+
+  /** Legacy – keep for backward compat, prefer sourcePath for mp3 uploads */
   @Field({ nullable: true })
   @Prop()
   fileUrl: string;
 
+  /** Legacy – keep for backward compat, prefer sourcePath for youtube */
   @Field({ nullable: true })
   @Prop()
   videoUrl: string;
@@ -71,6 +104,10 @@ export class Song {
   @Field({ nullable: true })
   @Prop()
   lastPlayedAt: Date;
+
+  @Field(() => ID)
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  userId: Types.ObjectId;
 
   @Field({ nullable: true })
   createdAt: Date;

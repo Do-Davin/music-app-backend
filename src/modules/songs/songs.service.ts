@@ -2,13 +2,27 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Song, SongDocument } from './schemas/song.schema';
+import { CreateSongInput } from './dto/create-song.input';
+import { UpdateSongInput } from './dto/update-song.input';
 
 @Injectable()
 export class SongsService {
   constructor(@InjectModel(Song.name) private songModel: Model<SongDocument>) {}
 
+  async create(userId: string, createSongInput: CreateSongInput): Promise<Song> {
+    const newSong = new this.songModel({
+      ...createSongInput,
+      userId: new Types.ObjectId(userId),
+    });
+    return newSong.save();
+  }
+
   async findAll(): Promise<Song[]> {
-    return this.songModel.find().exec();
+    return this.songModel.find({ isPublic: true }).exec();
+  }
+
+  async findByUser(userId: string): Promise<Song[]> {
+    return this.songModel.find({ userId: new Types.ObjectId(userId) }).exec();
   }
 
   async findOne(id: string): Promise<Song> {
@@ -19,6 +33,7 @@ export class SongsService {
     return song;
   }
 
+<<<<<<< HEAD
   async findManyByIds(ids: Types.ObjectId[]): Promise<Song[]> {
     if (!ids.length) return [];
 
@@ -29,5 +44,34 @@ export class SongsService {
 
     const byId = new Map(songs.map((s) => [String(s._id), s]));
     return ids.map((id) => byId.get(String(id))).filter(Boolean) as Song[];
+=======
+  async update(userId: string, updateSongInput: UpdateSongInput): Promise<Song> {
+    const { id, ...updateData } = updateSongInput;
+    const updated = await this.songModel
+      .findOneAndUpdate(
+        { _id: id, userId: new Types.ObjectId(userId) },
+        { $set: updateData },
+        { new: true },
+      )
+      .exec();
+    if (!updated) {
+      throw new NotFoundException(`Song not found or you don't have permission`);
+    }
+    return updated;
+  }
+
+  async remove(userId: string, id: string): Promise<boolean> {
+    const result = await this.songModel
+      .deleteOne({ _id: id, userId: new Types.ObjectId(userId) })
+      .exec();
+    if (result.deletedCount === 0) {
+      throw new NotFoundException(`Song not found or you don't have permission`);
+    }
+    return true;
+  }
+
+  async findManyByIds(ids: string[]): Promise<Song[]> {
+    return this.songModel.find({ _id: { $in: ids } }).exec();
+>>>>>>> 047c594fedd01f975aa8e04442359535d83cd7f3
   }
 }

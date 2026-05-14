@@ -12,6 +12,8 @@ import { UsersModule } from './modules/users/users.module';
 import { SongsModule } from './modules/songs/songs.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { mongoModuleAsyncOptions } from './config/mongodb.config';
+import { ReferencesModule } from './modules/references/references.module';
+import { KaraokeModule } from './modules/karaoke/karaoke.module';
 
 @Module({
   imports: [
@@ -21,11 +23,14 @@ import { mongoModuleAsyncOptions } from './config/mongodb.config';
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
       playground: true,
+      csrfPrevention: false,
     }),
     SongsModule,
     PlaylistsModule,
     UsersModule,
     AuthModule,
+    ReferencesModule,
+    KaraokeModule,
   ],
   controllers: [AppController],
   providers: [AppService, AppResolver],
