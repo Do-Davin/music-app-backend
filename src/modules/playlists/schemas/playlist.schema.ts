@@ -1,38 +1,47 @@
 import { ObjectType, Field, ID } from '@nestjs/graphql';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import { Song } from '../../songs/schemas/song.schema';
 
 @ObjectType()
 @Schema({ timestamps: true })
 export class Playlist {
   @Field(() => ID)
-  _id: Types.ObjectId;
+  _id!: Types.ObjectId;
+
+  @Field(() => ID, { nullable: true })
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  ownerId?: Types.ObjectId;
 
   @Field()
   @Prop({ required: true })
-  name: string;
+  name!: string;
 
   @Field({ nullable: true })
   @Prop()
-  description: string;
+  description?: string;
 
   @Field({ nullable: true })
   @Prop()
-  coverImageUrl: string;
+  coverImageUrl?: string;
 
   @Field(() => [ID], { nullable: true })
-  @Prop({ type: [Types.ObjectId], ref: 'Song' })
-  songIds: Types.ObjectId[];
+  @Prop({ type: [Types.ObjectId], ref: 'Song', default: [] })
+  songIds!: Types.ObjectId[];
+
+  // GraphQL-only field (resolved in resolver)
+  @Field(() => [Song], { nullable: true })
+  songs?: Song[];
 
   @Field({ nullable: true, defaultValue: false })
   @Prop({ default: false })
-  isPublic: boolean;
+  isPublic!: boolean;
 
   @Field({ nullable: true })
-  createdAt: Date;
+  createdAt?: Date;
 
   @Field({ nullable: true })
-  updatedAt: Date;
+  updatedAt?: Date;
 }
 
 export type PlaylistDocument = Playlist & Document;

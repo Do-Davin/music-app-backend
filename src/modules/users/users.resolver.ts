@@ -6,12 +6,14 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Song } from '../songs/schemas/song.schema';
 import { SongsService } from '../songs/songs.service';
+import { PlaylistsService } from '../playlists/playlists.service';
 
 @Resolver(() => User)
 export class UsersResolver {
   constructor(
     private readonly usersService: UsersService,
     private readonly songsService: SongsService,
+    private readonly playlistsService: PlaylistsService,
   ) {}
 
   @Query(() => User, { name: 'me' })
@@ -34,6 +36,7 @@ export class UsersResolver {
     @Args('songId', { type: () => ID }) songId: string,
   ): Promise<UserWithoutPassword> {
     await this.songsService.findOne(songId);
+    await this.playlistsService.addSongToLikedSongsPlaylist(userId, songId);
     return this.usersService.addLikedSong(userId, songId);
   }
 
@@ -44,6 +47,7 @@ export class UsersResolver {
     @Args('songId', { type: () => ID }) songId: string,
   ): Promise<UserWithoutPassword> {
     await this.songsService.findOne(songId);
+    await this.playlistsService.removeSongFromLikedSongsPlaylist(userId, songId);
     return this.usersService.removeLikedSong(userId, songId);
   }
 
@@ -56,6 +60,11 @@ export class UsersResolver {
     await this.songsService.findOne(songId);
 
     const isLiked = await this.usersService.isSongLiked(userId, songId);
+    if (isLiked) {
+      await this.playlistsService.removeSongFromLikedSongsPlaylist(userId, songId);
+    } else {
+      await this.playlistsService.addSongToLikedSongsPlaylist(userId, songId);
+    }
     return isLiked
       ? this.usersService.removeLikedSong(userId, songId)
       : this.usersService.addLikedSong(userId, songId);

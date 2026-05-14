@@ -2,13 +2,24 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-type Playlist {
+type Song {
   _id: ID!
-  name: String!
-  description: String
+  title: String!
+  artist: String!
+  albumName: String
+  duration: Int!
+  key: String
+  tempo: Int
+  difficulty: String
+  tags: [String!]
+  fileUrl: String
+  videoUrl: String
   coverImageUrl: String
-  songIds: [ID!]
+  lyrics: String
+  chordNotationStyle: String
   isPublic: Boolean
+  playCount: Int
+  lastPlayedAt: DateTime
   createdAt: DateTime
   updatedAt: DateTime
 }
@@ -17,6 +28,19 @@ type Playlist {
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
 scalar DateTime
+
+type Playlist {
+  _id: ID!
+  ownerId: ID
+  name: String!
+  description: String
+  coverImageUrl: String
+  songIds: [ID!]
+  songs: [Song!]
+  isPublic: Boolean
+  createdAt: DateTime
+  updatedAt: DateTime
+}
 
 type PracticeStreak {
   currentStreak: Int
@@ -54,28 +78,6 @@ type User {
   updatedAt: DateTime
 }
 
-type Song {
-  _id: ID!
-  title: String!
-  artist: String!
-  albumName: String
-  duration: Int!
-  key: String
-  tempo: Int
-  difficulty: String
-  tags: [String!]
-  fileUrl: String
-  videoUrl: String
-  coverImageUrl: String
-  lyrics: String
-  chordNotationStyle: String
-  isPublic: Boolean
-  playCount: Int
-  lastPlayedAt: DateTime
-  createdAt: DateTime
-  updatedAt: DateTime
-}
-
 type AuthResponse {
   accessToken: String!
   refreshToken: String!
@@ -103,6 +105,7 @@ type Query {
   song(id: ID!): Song!
   playlists: [Playlist!]!
   playlist(id: ID!): Playlist!
+  likedSongsPlaylist: Playlist!
   me: User!
   likedSongs: [Song!]!
 }
