@@ -1,0 +1,51 @@
+query RelationshipLists {
+  myFriends(limit: 20, offset: 0) {
+    _id
+    username
+    email
+    profileImageUrl
+  }
+  incomingFriendRequests(limit: 20, offset: 0) {
+    _id
+    username
+    email
+  }
+  outgoingFriendRequests(limit: 20, offset: 0) {
+    _id
+    username
+    email
+  }
+}
+
+mutation FriendRequestFlow($userId: ID!) {
+  sendFriendRequest(userId: $userId)
+}
+
+mutation RespondToFriendRequest($userId: ID!) {
+  acceptFriendRequest(userId: $userId)
+}
+
+query LikedAndRecentlyPlayed {
+  likedSongs(limit: 20, offset: 0) {
+    _id
+    title
+    artist
+  }
+  recentlyPlayed(limit: 20) {
+    songId
+    playedAt
+    song {
+      _id
+      title
+      artist
+    }
+  }
+}
+
+mutation SongRelationshipFlow($songId: ID!) {
+  likeSong(songId: $songId)
+}
+
+mutation RecentlyPlayedFlow($songId: ID!) {
+  addRecentlyPlayed(songId: $songId)
+}

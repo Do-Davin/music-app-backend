@@ -1,8 +1,7 @@
-import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
+import { Field, ID, Int, ObjectType } from '@nestjs/graphql';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
-// Nested: PracticeStreak
 @ObjectType()
 @Schema({ _id: false })
 export class PracticeStreak {
@@ -19,7 +18,6 @@ export class PracticeStreak {
   lastPracticeDate?: Date;
 }
 
-// Nested: PracticeGoals
 @ObjectType()
 @Schema({ _id: false })
 export class PracticeGoals {
@@ -32,7 +30,6 @@ export class PracticeGoals {
   weeklyDays: number;
 }
 
-// Nested: Preferences
 @ObjectType()
 @Schema({ _id: false })
 export class Preferences {
@@ -47,19 +44,6 @@ export class Preferences {
   @Field({ nullable: true })
   @Prop()
   instrument?: string;
-}
-
-// Sub-document: RecentlyPlayed
-@ObjectType()
-@Schema({ _id: false })
-export class RecentlyPlayed {
-  @Field(() => ID)
-  @Prop({ type: Types.ObjectId, ref: 'Song', required: true })
-  songId: Types.ObjectId;
-
-  @Field()
-  @Prop({ required: true })
-  playedAt: Date;
 }
 
 @ObjectType()
@@ -88,35 +72,6 @@ export class User {
   @Field({ nullable: true })
   @Prop()
   profileImageUrl?: string;
-
-  // TODO: prevent infinite
-  @Field(() => [ID], { nullable: true })
-  @Prop({ type: [Types.ObjectId], ref: 'Song', default: [] })
-  likedSongIds: Types.ObjectId[];
-
-  // TODO: add friendship table
-  @Field(() => [ID], { nullable: true })
-  @Prop({ type: [String], default: [] })
-  friendIds: string[];
-
-  @Field(() => [ID], { nullable: true })
-  @Prop({ type: [String], default: [] })
-  incomingFriendRequestIds: string[];
-
-  @Field(() => [ID], { nullable: true })
-  @Prop({ type: [String], default: [] })
-  outgoingFriendRequestIds: string[];
-
-  @Field(() => [RecentlyPlayed], { nullable: true })
-  @Prop({
-    type: [RecentlyPlayed],
-    default: [],
-    validate: {
-      validator: (v: RecentlyPlayed[]) => v.length <= 20,
-      message: 'Recently played list cannot exceed 20 items',
-    },
-  })
-  recentlyPlayed: RecentlyPlayed[];
 
   @Field(() => PracticeGoals, { nullable: true })
   @Prop({ type: PracticeGoals, default: () => ({}) })

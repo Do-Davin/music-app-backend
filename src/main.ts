@@ -11,7 +11,10 @@ async function bootstrap() {
   dns.setServers(['8.8.8.8', '8.8.4.4']);
 
   const app = await NestFactory.create(AppModule);
-<<<<<<< HEAD
+
+  app.use(graphqlUploadExpress({ maxFileSize: 50000000, maxFiles: 10 }));
+  app.use('/uploads', express.static(join(process.cwd(), 'uploads')));
+
   // Allow the web client (running on a different localhost port) to call the GraphQL API.
   // This is required for login/signup because browsers block the request if preflight OPTIONS
   // does not get `Access-Control-Allow-Origin`.
@@ -21,14 +24,6 @@ async function bootstrap() {
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: 'Content-Type,Authorization',
   });
-  await app.listen(3000);
-=======
-
-  app.use(graphqlUploadExpress({ maxFileSize: 50000000, maxFiles: 10 })); // 50MB max
-  app.use('/uploads', express.static(join(process.cwd(), 'uploads')));
-
-  app.enableCors();
   await app.listen(3000, '0.0.0.0');
->>>>>>> 047c594fedd01f975aa8e04442359535d83cd7f3
 }
 bootstrap();

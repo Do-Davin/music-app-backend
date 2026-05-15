@@ -1,9 +1,13 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Playlist, PlaylistDocument } from './schemas/playlist.schema';
 import { CreatePlaylistInput } from './dto/create-playlist.input';
 import { UpdatePlaylistInput } from './dto/update-playlist.input';
+import { Playlist, PlaylistDocument } from './schemas/playlist.schema';
 
 @Injectable()
 export class PlaylistsService {
@@ -11,19 +15,24 @@ export class PlaylistsService {
     @InjectModel(Playlist.name) private playlistModel: Model<PlaylistDocument>,
   ) {}
 
-<<<<<<< HEAD
   private validateObjectId(id: string, fieldName = 'ID'): void {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException(`Invalid ${fieldName} format`);
     }
-=======
-  async create(userId: string, createPlaylistInput: CreatePlaylistInput): Promise<Playlist> {
+  }
+
+  async create(
+    userId: string,
+    createPlaylistInput: CreatePlaylistInput,
+  ): Promise<Playlist> {
+    this.validateObjectId(userId, 'User ID');
+
     const newPlaylist = new this.playlistModel({
       ...createPlaylistInput,
+      ownerId: new Types.ObjectId(userId),
       userId: new Types.ObjectId(userId),
     });
     return newPlaylist.save();
->>>>>>> 047c594fedd01f975aa8e04442359535d83cd7f3
   }
 
   async findAll(): Promise<Playlist[]> {
@@ -31,10 +40,20 @@ export class PlaylistsService {
   }
 
   async findByUser(userId: string): Promise<Playlist[]> {
-    return this.playlistModel.find({ userId: new Types.ObjectId(userId) }).exec();
+    this.validateObjectId(userId, 'User ID');
+    return this.playlistModel
+      .find({
+        $or: [
+          { userId: new Types.ObjectId(userId) },
+          { ownerId: new Types.ObjectId(userId) },
+        ],
+      })
+      .exec();
   }
 
   async findOne(id: string): Promise<PlaylistDocument> {
+    this.validateObjectId(id, 'Playlist ID');
+
     const playlist = await this.playlistModel.findById(id).exec();
     if (!playlist) {
       throw new NotFoundException(`Playlist with ID "${id}" not found`);
@@ -42,18 +61,24 @@ export class PlaylistsService {
     return playlist;
   }
 
-<<<<<<< HEAD
   async findOrCreateLikedSongsPlaylist(ownerId: string): Promise<Playlist> {
     this.validateObjectId(ownerId, 'User ID');
 
+    const userObjectId = new Types.ObjectId(ownerId);
     const existing = await this.playlistModel
-      .findOne({ ownerId: new Types.ObjectId(ownerId), name: 'Liked Songs' })
+      .findOne({
+        name: 'Liked Songs',
+        $or: [{ userId: userObjectId }, { ownerId: userObjectId }],
+      })
       .exec();
 
-    if (existing) return existing;
+    if (existing) {
+      return existing;
+    }
 
     const created = new this.playlistModel({
-      ownerId: new Types.ObjectId(ownerId),
+      ownerId: userObjectId,
+      userId: userObjectId,
       name: 'Liked Songs',
       description: 'Your liked songs',
       coverImageUrl: null,
@@ -92,62 +117,119 @@ export class PlaylistsService {
         $pull: { songIds: new Types.ObjectId(songId) },
       })
       .exec();
-=======
-  async update(userId: string, updatePlaylistInput: UpdatePlaylistInput): Promise<Playlist> {
+  }
+
+  async update(
+    userId: string,
+    updatePlaylistInput: UpdatePlaylistInput,
+  ): Promise<Playlist> {
+    this.validateObjectId(userId, 'User ID');
+    this.validateObjectId(updatePlaylistInput.id, 'Playlist ID');
+
     const { id, ...updateData } = updatePlaylistInput;
     const playlist = await this.playlistModel
       .findOneAndUpdate(
-        { _id: id, userId: new Types.ObjectId(userId) },
+        {
+          _id: id,
+          $or: [
+            { userId: new Types.ObjectId(userId) },
+            { ownerId: new Types.ObjectId(userId) },
+          ],
+        },
         { $set: updateData },
         { new: true },
       )
       .exec();
 
     if (!playlist) {
-      throw new NotFoundException(`Playlist not found or you don't have permission`);
+      throw new NotFoundException(
+        `Playlist not found or you don't have permission`,
+      );
     }
     return playlist;
   }
 
   async remove(userId: string, id: string): Promise<boolean> {
+    this.validateObjectId(userId, 'User ID');
+    this.validateObjectId(id, 'Playlist ID');
+
     const result = await this.playlistModel
-      .deleteOne({ _id: id, userId: new Types.ObjectId(userId) })
+      .deleteOne({
+        _id: id,
+        $or: [
+          { userId: new Types.ObjectId(userId) },
+          { ownerId: new Types.ObjectId(userId) },
+        ],
+      })
       .exec();
-    
+
     if (result.deletedCount === 0) {
-      throw new NotFoundException(`Playlist not found or you don't have permission`);
+      throw new NotFoundException(
+        `Playlist not found or you don't have permission`,
+      );
     }
     return true;
   }
 
-  async addSong(userId: string, playlistId: string, songId: string): Promise<Playlist> {
+  async addSong(
+    userId: string,
+    playlistId: string,
+    songId: string,
+  ): Promise<Playlist> {
+    this.validateObjectId(userId, 'User ID');
+    this.validateObjectId(playlistId, 'Playlist ID');
+    this.validateObjectId(songId, 'Song ID');
+
     const playlist = await this.playlistModel
       .findOneAndUpdate(
-        { _id: playlistId, userId: new Types.ObjectId(userId) },
+        {
+          _id: playlistId,
+          $or: [
+            { userId: new Types.ObjectId(userId) },
+            { ownerId: new Types.ObjectId(userId) },
+          ],
+        },
         { $addToSet: { songIds: new Types.ObjectId(songId) } },
         { new: true },
       )
       .exec();
 
     if (!playlist) {
-      throw new NotFoundException(`Playlist not found or you don't have permission`);
+      throw new NotFoundException(
+        `Playlist not found or you don't have permission`,
+      );
     }
     return playlist;
   }
 
-  async removeSong(userId: string, playlistId: string, songId: string): Promise<Playlist> {
+  async removeSong(
+    userId: string,
+    playlistId: string,
+    songId: string,
+  ): Promise<Playlist> {
+    this.validateObjectId(userId, 'User ID');
+    this.validateObjectId(playlistId, 'Playlist ID');
+    this.validateObjectId(songId, 'Song ID');
+
     const playlist = await this.playlistModel
       .findOneAndUpdate(
-        { _id: playlistId, userId: new Types.ObjectId(userId) },
+        {
+          _id: playlistId,
+          $or: [
+            { userId: new Types.ObjectId(userId) },
+            { ownerId: new Types.ObjectId(userId) },
+          ],
+        },
         { $pull: { songIds: new Types.ObjectId(songId) } },
         { new: true },
       )
       .exec();
 
     if (!playlist) {
-      throw new NotFoundException(`Playlist not found or you don't have permission`);
+      throw new NotFoundException(
+        `Playlist not found or you don't have permission`,
+      );
     }
     return playlist;
->>>>>>> 047c594fedd01f975aa8e04442359535d83cd7f3
   }
 }

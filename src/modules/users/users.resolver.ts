@@ -1,18 +1,13 @@
 import { UseGuards } from '@nestjs/common';
-<<<<<<< HEAD
-import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
-import { User } from './schemas/user.schema';
-import { UsersService, type UserWithoutPassword } from './users.service';
-=======
-import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { User } from './schemas/user.schema';
-import { UserWithoutPassword, UsersService } from './users.service';
->>>>>>> 047c594fedd01f975aa8e04442359535d83cd7f3
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PlaylistsService } from '../playlists/playlists.service';
 import { Song } from '../songs/schemas/song.schema';
 import { SongsService } from '../songs/songs.service';
-import { PlaylistsService } from '../playlists/playlists.service';
+import { RecentlyPlayedSong } from './schemas/recently-played.schema';
+import { User } from './schemas/user.schema';
+import { UsersService, type UserWithoutPassword } from './users.service';
 
 @Resolver(() => User)
 export class UsersResolver {
@@ -28,54 +23,6 @@ export class UsersResolver {
     return this.usersService.findById(userId);
   }
 
-<<<<<<< HEAD
-  @Query(() => [Song], { name: 'likedSongs' })
-  @UseGuards(JwtAuthGuard)
-  async likedSongs(@CurrentUser('userId') userId: string): Promise<Song[]> {
-    const ids = await this.usersService.getLikedSongs(userId);
-    return this.songsService.findManyByIds(ids);
-  }
-
-  @Mutation(() => User, { name: 'likeSong' })
-  @UseGuards(JwtAuthGuard)
-  async likeSong(
-    @CurrentUser('userId') userId: string,
-    @Args('songId', { type: () => ID }) songId: string,
-  ): Promise<UserWithoutPassword> {
-    await this.songsService.findOne(songId);
-    await this.playlistsService.addSongToLikedSongsPlaylist(userId, songId);
-    return this.usersService.addLikedSong(userId, songId);
-  }
-
-  @Mutation(() => User, { name: 'unlikeSong' })
-  @UseGuards(JwtAuthGuard)
-  async unlikeSong(
-    @CurrentUser('userId') userId: string,
-    @Args('songId', { type: () => ID }) songId: string,
-  ): Promise<UserWithoutPassword> {
-    await this.songsService.findOne(songId);
-    await this.playlistsService.removeSongFromLikedSongsPlaylist(userId, songId);
-    return this.usersService.removeLikedSong(userId, songId);
-  }
-
-  @Mutation(() => User, { name: 'toggleLikeSong' })
-  @UseGuards(JwtAuthGuard)
-  async toggleLikeSong(
-    @CurrentUser('userId') userId: string,
-    @Args('songId', { type: () => ID }) songId: string,
-  ): Promise<UserWithoutPassword> {
-    await this.songsService.findOne(songId);
-
-    const isLiked = await this.usersService.isSongLiked(userId, songId);
-    if (isLiked) {
-      await this.playlistsService.removeSongFromLikedSongsPlaylist(userId, songId);
-    } else {
-      await this.playlistsService.addSongToLikedSongsPlaylist(userId, songId);
-    }
-    return isLiked
-      ? this.usersService.removeLikedSong(userId, songId)
-      : this.usersService.addLikedSong(userId, songId);
-=======
   @Query(() => [User], { name: 'searchUsers' })
   @UseGuards(JwtAuthGuard)
   async searchUsers(
@@ -88,24 +35,62 @@ export class UsersResolver {
   @UseGuards(JwtAuthGuard)
   async getMyFriends(
     @CurrentUser('userId') userId: string,
+    @Args('limit', { type: () => Int, nullable: true }) limit?: number,
+    @Args('offset', { type: () => Int, nullable: true }) offset?: number,
   ): Promise<UserWithoutPassword[]> {
-    return this.usersService.getFriends(userId);
+    return this.usersService.getFriends(userId, limit, offset);
   }
 
   @Query(() => [User], { name: 'incomingFriendRequests' })
   @UseGuards(JwtAuthGuard)
   async getIncomingFriendRequests(
     @CurrentUser('userId') userId: string,
+    @Args('limit', { type: () => Int, nullable: true }) limit?: number,
+    @Args('offset', { type: () => Int, nullable: true }) offset?: number,
   ): Promise<UserWithoutPassword[]> {
-    return this.usersService.getIncomingFriendRequests(userId);
+    return this.usersService.getIncomingFriendRequests(userId, limit, offset);
   }
 
   @Query(() => [User], { name: 'outgoingFriendRequests' })
   @UseGuards(JwtAuthGuard)
   async getOutgoingFriendRequests(
     @CurrentUser('userId') userId: string,
+    @Args('limit', { type: () => Int, nullable: true }) limit?: number,
+    @Args('offset', { type: () => Int, nullable: true }) offset?: number,
   ): Promise<UserWithoutPassword[]> {
-    return this.usersService.getOutgoingFriendRequests(userId);
+    return this.usersService.getOutgoingFriendRequests(userId, limit, offset);
+  }
+
+  @Query(() => [Song], { name: 'likedSongs' })
+  @UseGuards(JwtAuthGuard)
+  async likedSongs(
+    @CurrentUser('userId') userId: string,
+    @Args('limit', { type: () => Int, nullable: true }) limit?: number,
+    @Args('offset', { type: () => Int, nullable: true }) offset?: number,
+  ): Promise<Song[]> {
+    const ids = await this.usersService.getLikedSongs(userId, limit, offset);
+    return this.songsService.findManyByIds(ids);
+  }
+
+  @Query(() => [RecentlyPlayedSong], { name: 'recentlyPlayed' })
+  @UseGuards(JwtAuthGuard)
+  async recentlyPlayed(
+    @CurrentUser('userId') userId: string,
+    @Args('limit', { type: () => Int, nullable: true }) limit?: number,
+  ): Promise<RecentlyPlayedSong[]> {
+    const entries = await this.usersService.getRecentlyPlayed(userId, limit);
+    const songs = await this.songsService.findManyByIds(
+      entries.map((entry) => entry.songId),
+    );
+    const songsById = new Map(songs.map((song) => [String(song._id), song]));
+
+    return entries
+      .map((entry) => ({
+        songId: entry.songId,
+        playedAt: entry.playedAt,
+        song: songsById.get(String(entry.songId)),
+      }))
+      .filter((entry): entry is RecentlyPlayedSong => Boolean(entry.song));
   }
 
   @Mutation(() => Boolean, { name: 'sendFriendRequest' })
@@ -148,6 +133,61 @@ export class UsersResolver {
     @Args('userId', { type: () => ID }) targetUserId: string,
   ): Promise<boolean> {
     return this.usersService.cancelFriendRequest(currentUserId, targetUserId);
->>>>>>> 047c594fedd01f975aa8e04442359535d83cd7f3
+  }
+
+  @Mutation(() => Boolean, { name: 'likeSong' })
+  @UseGuards(JwtAuthGuard)
+  async likeSong(
+    @CurrentUser('userId') userId: string,
+    @Args('songId', { type: () => ID }) songId: string,
+  ): Promise<boolean> {
+    await this.songsService.findOne(songId);
+    await this.playlistsService.addSongToLikedSongsPlaylist(userId, songId);
+    return this.usersService.addLikedSong(userId, songId);
+  }
+
+  @Mutation(() => Boolean, { name: 'unlikeSong' })
+  @UseGuards(JwtAuthGuard)
+  async unlikeSong(
+    @CurrentUser('userId') userId: string,
+    @Args('songId', { type: () => ID }) songId: string,
+  ): Promise<boolean> {
+    await this.songsService.findOne(songId);
+    await this.playlistsService.removeSongFromLikedSongsPlaylist(
+      userId,
+      songId,
+    );
+    return this.usersService.removeLikedSong(userId, songId);
+  }
+
+  @Mutation(() => Boolean, { name: 'toggleLikeSong' })
+  @UseGuards(JwtAuthGuard)
+  async toggleLikeSong(
+    @CurrentUser('userId') userId: string,
+    @Args('songId', { type: () => ID }) songId: string,
+  ): Promise<boolean> {
+    await this.songsService.findOne(songId);
+
+    const isLiked = await this.usersService.isSongLiked(userId, songId);
+    if (isLiked) {
+      await this.playlistsService.removeSongFromLikedSongsPlaylist(
+        userId,
+        songId,
+      );
+      return this.usersService.removeLikedSong(userId, songId);
+    }
+
+    await this.playlistsService.addSongToLikedSongsPlaylist(userId, songId);
+    return this.usersService.addLikedSong(userId, songId);
+  }
+
+  @Mutation(() => Boolean, { name: 'addRecentlyPlayed' })
+  @UseGuards(JwtAuthGuard)
+  async addRecentlyPlayed(
+    @CurrentUser('userId') userId: string,
+    @Args('songId', { type: () => ID }) songId: string,
+  ): Promise<boolean> {
+    await this.songsService.findOne(songId);
+    return this.usersService.addRecentlyPlayed(userId, songId);
   }
 }
