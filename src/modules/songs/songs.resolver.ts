@@ -60,10 +60,10 @@ export class SongsResolver {
   @Mutation(() => Song)
   @UseGuards(JwtAuthGuard)
   async createSong(
-    @CurrentUser() user: User,
+    @CurrentUser('userId') userId: string,
     @Args('createSongInput') createSongInput: CreateSongInput,
   ): Promise<Song> {
-    return this.songsService.create(user._id.toString(), createSongInput);
+    return this.songsService.create(userId, createSongInput);
   }
 
   /**

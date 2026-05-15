@@ -1,4 +1,4 @@
-import { ObjectType, Field, ID } from '@nestjs/graphql';
+import { Field, ID, ObjectType } from '@nestjs/graphql';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { Song } from '../../songs/schemas/song.schema';
@@ -33,12 +33,8 @@ export class Playlist {
   @Prop({ type: [Types.ObjectId], ref: 'Song', default: [] })
   songIds!: Types.ObjectId[];
 
-  // GraphQL-only field (resolved in resolver)
   @Field(() => [Song], { nullable: true })
   songs?: Song[];
-
-  @Field(() => [Song], { nullable: true })
-  songs: Song[];
 
   @Field({ nullable: true, defaultValue: false })
   @Prop({ default: false })

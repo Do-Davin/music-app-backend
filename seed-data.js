@@ -24,7 +24,13 @@ async function seed() {
 
     // 1. Seed Users
     const usersCollection = db.collection('users');
+    const userLikedSongsCollection = db.collection('userlikedsongs');
+    const recentlyPlayedCollection = db.collection('recentlyplayeds');
+    const friendshipsCollection = db.collection('friendships');
     await usersCollection.deleteMany({});
+    await userLikedSongsCollection.deleteMany({});
+    await recentlyPlayedCollection.deleteMany({});
+    await friendshipsCollection.deleteMany({});
     console.log('Cleared users collection');
 
     const hashedPassword = await bcrypt.hash('password123', 10);
@@ -33,10 +39,12 @@ async function seed() {
         username: 'johndoe',
         email: 'john@example.com',
         password: hashedPassword,
-        likedSongIds: [],
-        recentlyPlayed: [],
         practiceGoals: { dailyMinutes: 30, weeklyDays: 5 },
-        practiceStreak: { currentStreak: 5, longestStreak: 10, lastPracticeDate: new Date() },
+        practiceStreak: {
+          currentStreak: 5,
+          longestStreak: 10,
+          lastPracticeDate: new Date(),
+        },
         preferences: { defaultBpm: 120, tuningHz: 440, instrument: 'Guitar' },
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -45,14 +53,16 @@ async function seed() {
         username: 'janedoe',
         email: 'jane@example.com',
         password: hashedPassword,
-        likedSongIds: [],
-        recentlyPlayed: [],
         practiceGoals: { dailyMinutes: 45, weeklyDays: 7 },
-        practiceStreak: { currentStreak: 12, longestStreak: 15, lastPracticeDate: new Date() },
+        practiceStreak: {
+          currentStreak: 12,
+          longestStreak: 15,
+          lastPracticeDate: new Date(),
+        },
         preferences: { defaultBpm: 100, tuningHz: 440, instrument: 'Piano' },
         createdAt: new Date(),
         updatedAt: new Date(),
-      }
+      },
     ];
 
     const userResult = await usersCollection.insertMany(users);
@@ -68,7 +78,7 @@ async function seed() {
       {
         title: 'Wonderwall',
         artist: 'Oasis',
-        albumName: '(What\'s the Story) Morning Glory?',
+        albumName: "(What's the Story) Morning Glory?",
         duration: 258,
         key: 'F#m',
         tempo: 87,
@@ -79,6 +89,7 @@ async function seed() {
         chordNotationStyle: 'standard',
         isPublic: true,
         playCount: 150,
+        userId: seededUsers[0]._id,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -96,6 +107,7 @@ async function seed() {
         chordNotationStyle: 'standard',
         isPublic: true,
         playCount: 300,
+        userId: seededUsers[0]._id,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -109,10 +121,11 @@ async function seed() {
         difficulty: 'beginner',
         tags: ['pop', 'acoustic'],
         videoUrl: 'https://www.youtube.com/watch?v=JGwWNGJdvx8',
-        lyrics: 'The club isn\'t the best place to find a lover...',
+        lyrics: "The club isn't the best place to find a lover...",
         chordNotationStyle: 'standard',
         isPublic: true,
         playCount: 1200,
+        userId: seededUsers[1]._id,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -130,28 +143,51 @@ async function seed() {
         chordNotationStyle: 'standard',
         isPublic: true,
         playCount: 500,
+        userId: seededUsers[1]._id,
         createdAt: new Date(),
         updatedAt: new Date(),
-      }
+      },
     ];
 
     const songResult = await songsCollection.insertMany(songs);
     console.log(`Inserted ${songResult.insertedCount} songs`);
     const seededSongs = await songsCollection.find().toArray();
 
-    // 3. Update Users with liked songs and recently played
-    await usersCollection.updateOne(
-      { _id: seededUsers[0]._id },
+    // 3. Seed user relationship collections
+    await userLikedSongsCollection.insertMany([
       {
-        $set: {
-          likedSongIds: [seededSongs[0]._id, seededSongs[1]._id],
-          recentlyPlayed: [
-            { songId: seededSongs[0]._id, playedAt: new Date() },
-            { songId: seededSongs[1]._id, playedAt: new Date(Date.now() - 86400000) }
-          ]
-        }
-      }
-    );
+        userId: seededUsers[0]._id,
+        songId: seededSongs[0]._id,
+        createdAt: new Date(),
+      },
+      {
+        userId: seededUsers[0]._id,
+        songId: seededSongs[1]._id,
+        createdAt: new Date(),
+      },
+    ]);
+    await recentlyPlayedCollection.insertMany([
+      {
+        userId: seededUsers[0]._id,
+        songId: seededSongs[0]._id,
+        playedAt: new Date(),
+      },
+      {
+        userId: seededUsers[0]._id,
+        songId: seededSongs[1]._id,
+        playedAt: new Date(Date.now() - 86400000),
+      },
+    ]);
+    await friendshipsCollection.insertOne({
+      requesterId: seededUsers[0]._id,
+      receiverId: seededUsers[1]._id,
+      status: 'ACCEPTED',
+      pairKey: [String(seededUsers[0]._id), String(seededUsers[1]._id)]
+        .sort()
+        .join(':'),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
 
     // 4. Seed Playlists
     const playlistsCollection = db.collection('playlists');
@@ -161,6 +197,8 @@ async function seed() {
     const playlists = [
       {
         name: 'Rock Classics',
+        ownerId: seededUsers[0]._id,
+        userId: seededUsers[0]._id,
         description: 'The best rock songs of all time',
         songIds: [seededSongs[0]._id, seededSongs[1]._id, seededSongs[3]._id],
         isPublic: true,
@@ -169,12 +207,14 @@ async function seed() {
       },
       {
         name: 'Acoustic Vibes',
+        ownerId: seededUsers[1]._id,
+        userId: seededUsers[1]._id,
         description: 'Chilled acoustic tunes',
         songIds: [seededSongs[0]._id, seededSongs[2]._id],
         isPublic: true,
         createdAt: new Date(),
         updatedAt: new Date(),
-      }
+      },
     ];
 
     const playlistResult = await playlistsCollection.insertMany(playlists);

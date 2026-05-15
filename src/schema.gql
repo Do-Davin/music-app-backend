@@ -7,20 +7,13 @@ type Song {
   title: String!
   artist: String!
   albumName: String
-<<<<<<< HEAD
-  duration: Int!
-=======
   duration: Int
->>>>>>> 047c594fedd01f975aa8e04442359535d83cd7f3
   key: String
   tempo: Int
   difficulty: String
   tags: [String!]
-<<<<<<< HEAD
-=======
   source: SongSource
   sourcePath: String
->>>>>>> 047c594fedd01f975aa8e04442359535d83cd7f3
   fileUrl: String
   videoUrl: String
   coverImageUrl: String
@@ -29,10 +22,7 @@ type Song {
   isPublic: Boolean
   playCount: Int
   lastPlayedAt: DateTime
-<<<<<<< HEAD
-=======
   userId: ID!
->>>>>>> 047c594fedd01f975aa8e04442359535d83cd7f3
   createdAt: DateTime
   updatedAt: DateTime
 }
@@ -47,19 +37,6 @@ enum SongSource {
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
 scalar DateTime
-
-type Playlist {
-  _id: ID!
-  ownerId: ID
-  name: String!
-  description: String
-  coverImageUrl: String
-  songIds: [ID!]
-  songs: [Song!]
-  isPublic: Boolean
-  createdAt: DateTime
-  updatedAt: DateTime
-}
 
 type PracticeStreak {
   currentStreak: Int
@@ -78,21 +55,11 @@ type Preferences {
   instrument: String
 }
 
-type RecentlyPlayed {
-  songId: ID!
-  playedAt: DateTime!
-}
-
 type User {
   _id: ID!
   username: String
   email: String!
   profileImageUrl: String
-  likedSongIds: [ID!]
-  friendIds: [ID!]
-  incomingFriendRequestIds: [ID!]
-  outgoingFriendRequestIds: [ID!]
-  recentlyPlayed: [RecentlyPlayed!]
   practiceGoals: PracticeGoals
   practiceStreak: PracticeStreak
   preferences: Preferences
@@ -100,22 +67,26 @@ type User {
   updatedAt: DateTime
 }
 
-<<<<<<< HEAD
-=======
 type Playlist {
   _id: ID!
+  ownerId: ID
   userId: ID!
   name: String!
   description: String
   coverImageUrl: String
   songIds: [ID!]
-  songs: [Song!]!
+  songs: [Song!]
   isPublic: Boolean
   createdAt: DateTime
   updatedAt: DateTime
 }
 
->>>>>>> 047c594fedd01f975aa8e04442359535d83cd7f3
+type RecentlyPlayedSong {
+  songId: ID!
+  playedAt: DateTime!
+  song: Song!
+}
+
 type AuthResponse {
   accessToken: String!
   refreshToken: String!
@@ -186,19 +157,12 @@ type Query {
   playlist(id: ID!): Playlist!
   likedSongsPlaylist: Playlist!
   me: User!
-<<<<<<< HEAD
-  likedSongs: [Song!]!
-}
-
-type Mutation {
-  likeSong(songId: ID!): User!
-  unlikeSong(songId: ID!): User!
-  toggleLikeSong(songId: ID!): User!
-=======
   searchUsers(search: String!): [User!]!
-  myFriends: [User!]!
-  incomingFriendRequests: [User!]!
-  outgoingFriendRequests: [User!]!
+  myFriends(limit: Int, offset: Int): [User!]!
+  incomingFriendRequests(limit: Int, offset: Int): [User!]!
+  outgoingFriendRequests(limit: Int, offset: Int): [User!]!
+  likedSongs(limit: Int, offset: Int): [Song!]!
+  recentlyPlayed(limit: Int): [RecentlyPlayedSong!]!
   referenceMaterials(type: String): [ReferenceMaterial!]!
   referenceMaterial(id: ID!): ReferenceMaterial!
   karaokeHealth: String!
@@ -218,7 +182,10 @@ type Mutation {
   acceptFriendRequest(userId: ID!): Boolean!
   rejectFriendRequest(userId: ID!): Boolean!
   cancelFriendRequest(userId: ID!): Boolean!
->>>>>>> 047c594fedd01f975aa8e04442359535d83cd7f3
+  likeSong(songId: ID!): Boolean!
+  unlikeSong(songId: ID!): Boolean!
+  toggleLikeSong(songId: ID!): Boolean!
+  addRecentlyPlayed(songId: ID!): Boolean!
   register(input: RegisterInput!): AuthResponse!
   login(input: LoginInput!): AuthResponse!
   refreshToken(input: RefreshTokenInput!): AuthResponse!
