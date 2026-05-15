@@ -7,13 +7,20 @@ type Song {
   title: String!
   artist: String!
   albumName: String
+<<<<<<< HEAD
+  duration: Int!
+=======
   duration: Int
+>>>>>>> 047c594fedd01f975aa8e04442359535d83cd7f3
   key: String
   tempo: Int
   difficulty: String
   tags: [String!]
+<<<<<<< HEAD
+=======
   source: SongSource
   sourcePath: String
+>>>>>>> 047c594fedd01f975aa8e04442359535d83cd7f3
   fileUrl: String
   videoUrl: String
   coverImageUrl: String
@@ -22,7 +29,10 @@ type Song {
   isPublic: Boolean
   playCount: Int
   lastPlayedAt: DateTime
+<<<<<<< HEAD
+=======
   userId: ID!
+>>>>>>> 047c594fedd01f975aa8e04442359535d83cd7f3
   createdAt: DateTime
   updatedAt: DateTime
 }
@@ -37,6 +47,19 @@ enum SongSource {
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
 scalar DateTime
+
+type Playlist {
+  _id: ID!
+  ownerId: ID
+  name: String!
+  description: String
+  coverImageUrl: String
+  songIds: [ID!]
+  songs: [Song!]
+  isPublic: Boolean
+  createdAt: DateTime
+  updatedAt: DateTime
+}
 
 type PracticeStreak {
   currentStreak: Int
@@ -77,6 +100,8 @@ type User {
   updatedAt: DateTime
 }
 
+<<<<<<< HEAD
+=======
 type Playlist {
   _id: ID!
   userId: ID!
@@ -90,6 +115,7 @@ type Playlist {
   updatedAt: DateTime
 }
 
+>>>>>>> 047c594fedd01f975aa8e04442359535d83cd7f3
 type AuthResponse {
   accessToken: String!
   refreshToken: String!
@@ -158,7 +184,17 @@ type Query {
   playlists: [Playlist!]!
   myPlaylists: [Playlist!]!
   playlist(id: ID!): Playlist!
+  likedSongsPlaylist: Playlist!
   me: User!
+<<<<<<< HEAD
+  likedSongs: [Song!]!
+}
+
+type Mutation {
+  likeSong(songId: ID!): User!
+  unlikeSong(songId: ID!): User!
+  toggleLikeSong(songId: ID!): User!
+=======
   searchUsers(search: String!): [User!]!
   myFriends: [User!]!
   incomingFriendRequests: [User!]!
@@ -182,6 +218,7 @@ type Mutation {
   acceptFriendRequest(userId: ID!): Boolean!
   rejectFriendRequest(userId: ID!): Boolean!
   cancelFriendRequest(userId: ID!): Boolean!
+>>>>>>> 047c594fedd01f975aa8e04442359535d83cd7f3
   register(input: RegisterInput!): AuthResponse!
   login(input: LoginInput!): AuthResponse!
   refreshToken(input: RefreshTokenInput!): AuthResponse!

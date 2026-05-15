@@ -13,9 +13,12 @@
     "target": "ES2023",
     "sourceMap": true,
     "outDir": "./dist",
+<<<<<<< HEAD
+=======
     "paths": {
       "@app/*": ["./src/app/*"]
     },
+>>>>>>> 047c594fedd01f975aa8e04442359535d83cd7f3
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": true,

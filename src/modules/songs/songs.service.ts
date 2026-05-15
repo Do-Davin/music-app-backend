@@ -33,6 +33,18 @@ export class SongsService {
     return song;
   }
 
+<<<<<<< HEAD
+  async findManyByIds(ids: Types.ObjectId[]): Promise<Song[]> {
+    if (!ids.length) return [];
+
+    const songs = await this.songModel
+      .find({ _id: { $in: ids } })
+      .lean()
+      .exec();
+
+    const byId = new Map(songs.map((s) => [String(s._id), s]));
+    return ids.map((id) => byId.get(String(id))).filter(Boolean) as Song[];
+=======
   async update(userId: string, updateSongInput: UpdateSongInput): Promise<Song> {
     const { id, ...updateData } = updateSongInput;
     const updated = await this.songModel
@@ -60,5 +72,6 @@ export class SongsService {
 
   async findManyByIds(ids: string[]): Promise<Song[]> {
     return this.songModel.find({ _id: { $in: ids } }).exec();
+>>>>>>> 047c594fedd01f975aa8e04442359535d83cd7f3
   }
 }
