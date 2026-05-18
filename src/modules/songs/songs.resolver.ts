@@ -32,6 +32,13 @@ export class SongsResolver {
     return this.songsService.findByUser(user._id.toString());
   }
 
+  @Query(() => [Song], { name: 'searchSongs' })
+  async searchSongs(
+    @Args('query', { type: () => String }) query: string,
+  ): Promise<Song[]> {
+    return this.songsService.search(query);
+  }
+
   // ── Mutations ─────────────────────────────────────────────────────────────
 
   /**

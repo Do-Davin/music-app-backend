@@ -72,6 +72,24 @@ export class SongsService {
     return true;
   }
 
+  async search(query: string): Promise<Song[]> {
+    if (!query) return [];
+    
+    const searchRegex = new RegExp(query, 'i');
+    return this.songModel
+      .find({
+        $or: [
+          { title: searchRegex },
+          { artist: searchRegex },
+          { albumName: searchRegex },
+          { lyrics: searchRegex },
+          { tags: searchRegex },
+        ],
+        isPublic: true,
+      })
+      .exec();
+  }
+
   async findManyByIds(ids: Array<string | Types.ObjectId>): Promise<Song[]> {
     if (!ids.length) {
       return [];
