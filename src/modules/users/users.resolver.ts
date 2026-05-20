@@ -144,6 +144,14 @@ export class UsersResolver {
     return this.usersService.updateUsername(userId, newUsername);
   }
 
+  @Mutation(() => User, { name: 'switchToProfessionalAccount' })
+  @UseGuards(JwtAuthGuard)
+  async switchToProfessionalAccount(
+    @CurrentUser('userId') userId: string,
+  ): Promise<UserWithoutPassword> {
+    return this.usersService.switchToProfessionalAccount(userId);
+  }
+
   @Mutation(() => Boolean, { name: 'likeSong' })
   @UseGuards(JwtAuthGuard)
   async likeSong(
