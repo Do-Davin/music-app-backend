@@ -173,6 +173,49 @@ export class UsersService {
     return this.userModel.findById(id).exec();
   }
 
+  async updateUsername(
+    userId: string,
+    newUsername: string,
+  ): Promise<UserWithoutPassword> {
+    this.validateObjectId(userId, 'User ID');
+
+    const trimmedUsername = newUsername.trim();
+    if (trimmedUsername.length < 3) {
+      throw new BadRequestException(
+        'Username must be at least 3 characters long',
+      );
+    }
+
+    const existingUser = await this.userModel
+      .findOne({ username: trimmedUsername, _id: { $ne: userId } })
+      .exec();
+
+    if (existingUser) {
+      throw new ConflictException('Username already taken');
+    }
+
+    try {
+      const updatedUser = await this.userModel
+        .findByIdAndUpdate(
+          userId,
+          { $set: { username: trimmedUsername } },
+          { new: true },
+        )
+        .exec();
+
+      if (!updatedUser) {
+        throw new NotFoundException(`User with ID "${userId}" not found`);
+      }
+
+      return this.stripPassword(updatedUser);
+    } catch (error) {
+      if ((error as { code?: number }).code === 11000) {
+        throw new ConflictException('Username already taken');
+      }
+      throw error;
+    }
+  }
+
   async findUsersByUsernameOrEmail(
     search: string,
   ): Promise<UserWithoutPassword[]> {
