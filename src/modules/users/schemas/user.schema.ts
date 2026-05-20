@@ -1,6 +1,15 @@
-import { Field, ID, Int, ObjectType } from '@nestjs/graphql';
+import { Field, ID, Int, ObjectType, registerEnumType } from '@nestjs/graphql';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+
+export enum ProfileType {
+  PERSONAL = 'PERSONAL',
+  PROFESSIONAL = 'PROFESSIONAL',
+}
+
+registerEnumType(ProfileType, {
+  name: 'ProfileType',
+});
 
 @ObjectType()
 @Schema({ _id: false })
@@ -72,6 +81,14 @@ export class User {
   @Field({ nullable: true })
   @Prop()
   profileImageUrl?: string;
+
+  @Field(() => ProfileType)
+  @Prop({
+    enum: ProfileType,
+    required: true,
+    default: ProfileType.PERSONAL,
+  })
+  profileType: ProfileType;
 
   @Field(() => PracticeGoals, { nullable: true })
   @Prop({ type: PracticeGoals, default: () => ({}) })

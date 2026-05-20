@@ -60,11 +60,17 @@ type User {
   username: String
   email: String!
   profileImageUrl: String
+  profileType: ProfileType!
   practiceGoals: PracticeGoals
   practiceStreak: PracticeStreak
   preferences: Preferences
   createdAt: DateTime
   updatedAt: DateTime
+}
+
+enum ProfileType {
+  PERSONAL
+  PROFESSIONAL
 }
 
 type Playlist {
@@ -184,6 +190,7 @@ type Mutation {
   rejectFriendRequest(userId: ID!): Boolean!
   cancelFriendRequest(userId: ID!): Boolean!
   updateUsername(newUsername: String!): User!
+  switchToProfessionalAccount: User!
   likeSong(songId: ID!): Boolean!
   unlikeSong(songId: ID!): Boolean!
   toggleLikeSong(songId: ID!): Boolean!

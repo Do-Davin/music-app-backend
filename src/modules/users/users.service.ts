@@ -19,7 +19,7 @@ import {
   UserLikedSong,
   UserLikedSongDocument,
 } from './schemas/user-liked-song.schema';
-import { User, UserDocument } from './schemas/user.schema';
+import { ProfileType, User, UserDocument } from './schemas/user.schema';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const bcrypt = require('bcryptjs') as typeof import('bcryptjs');
 
@@ -214,6 +214,26 @@ export class UsersService {
       }
       throw error;
     }
+  }
+
+  async switchToProfessionalAccount(
+    userId: string,
+  ): Promise<UserWithoutPassword> {
+    this.validateObjectId(userId, 'User ID');
+
+    const updatedUser = await this.userModel
+      .findByIdAndUpdate(
+        userId,
+        { $set: { profileType: ProfileType.PROFESSIONAL } },
+        { new: true },
+      )
+      .exec();
+
+    if (!updatedUser) {
+      throw new NotFoundException(`User with ID "${userId}" not found`);
+    }
+
+    return this.stripPassword(updatedUser);
   }
 
   async findUsersByUsernameOrEmail(
