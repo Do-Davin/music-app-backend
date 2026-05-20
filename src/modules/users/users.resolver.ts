@@ -135,6 +135,15 @@ export class UsersResolver {
     return this.usersService.cancelFriendRequest(currentUserId, targetUserId);
   }
 
+  @Mutation(() => User, { name: 'updateUsername' })
+  @UseGuards(JwtAuthGuard)
+  async updateUsername(
+    @CurrentUser('userId') userId: string,
+    @Args('newUsername') newUsername: string,
+  ): Promise<UserWithoutPassword> {
+    return this.usersService.updateUsername(userId, newUsername);
+  }
+
   @Mutation(() => Boolean, { name: 'likeSong' })
   @UseGuards(JwtAuthGuard)
   async likeSong(

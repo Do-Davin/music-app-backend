@@ -182,6 +182,7 @@ type Mutation {
   acceptFriendRequest(userId: ID!): Boolean!
   rejectFriendRequest(userId: ID!): Boolean!
   cancelFriendRequest(userId: ID!): Boolean!
+  updateUsername(newUsername: String!): User!
   likeSong(songId: ID!): Boolean!
   unlikeSong(songId: ID!): Boolean!
   toggleLikeSong(songId: ID!): Boolean!
