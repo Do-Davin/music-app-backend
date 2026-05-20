@@ -152,6 +152,7 @@ type Query {
   songs: [Song!]!
   song(id: ID!): Song!
   mySongs: [Song!]!
+  searchSongs(query: String!): [Song!]!
   playlists: [Playlist!]!
   myPlaylists: [Playlist!]!
   playlist(id: ID!): Playlist!
