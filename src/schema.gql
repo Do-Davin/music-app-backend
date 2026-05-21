@@ -98,6 +98,16 @@ type RecentlyPlayedSong {
   song: Song!
 }
 
+type RelationshipStatus {
+  profileType: ProfileType!
+  isFriend: Boolean!
+  hasIncomingFriendRequest: Boolean!
+  hasOutgoingFriendRequest: Boolean!
+  isFollowing: Boolean!
+  canAddFriend: Boolean!
+  canFollow: Boolean!
+}
+
 type AuthResponse {
   accessToken: String!
   refreshToken: String!
@@ -176,6 +186,7 @@ type Query {
   myFollowing: [User!]!
   myFollowers: [User!]!
   followCounts(userId: ID!): FollowCounts!
+  relationshipStatus(userId: ID!): RelationshipStatus!
   likedSongs(limit: Int, offset: Int): [Song!]!
   recentlyPlayed(limit: Int): [RecentlyPlayedSong!]!
   referenceMaterials(type: String): [ReferenceMaterial!]!

@@ -16,6 +16,7 @@ import {
   RecentlyPlayed,
   RecentlyPlayedDocument,
 } from './schemas/recently-played.schema';
+import { RelationshipStatus } from './schemas/relationship-status.schema';
 import {
   UserLikedSong,
   UserLikedSongDocument,
@@ -592,6 +593,87 @@ export class UsersService {
     ]);
 
     return { followers, following };
+  }
+
+  async getRelationshipStatus(
+    currentUserId: string,
+    targetUserId: string,
+  ): Promise<RelationshipStatus> {
+    const currentUserObjectId = this.toObjectId(
+      currentUserId,
+      'Current user ID',
+    );
+    const targetUserObjectId = this.toObjectId(targetUserId, 'Target user ID');
+    const normalizedCurrentUserId = String(currentUserObjectId);
+    const normalizedTargetUserId = String(targetUserObjectId);
+    const isSelf = normalizedCurrentUserId === normalizedTargetUserId;
+
+    const [currentUser, targetUser, friendship, follow] = await Promise.all([
+      this.userModel.findById(currentUserObjectId).exec(),
+      this.userModel.findById(targetUserObjectId).exec(),
+      isSelf
+        ? Promise.resolve(null)
+        : this.friendshipModel
+            .findOne({
+              pairKey: this.pairKey(
+                normalizedCurrentUserId,
+                normalizedTargetUserId,
+              ),
+            })
+            .lean()
+            .exec(),
+      isSelf
+        ? Promise.resolve(null)
+        : this.followModel
+            .exists({
+              pairKey: this.followPairKey(
+                normalizedCurrentUserId,
+                normalizedTargetUserId,
+              ),
+            })
+            .exec(),
+    ]);
+
+    if (!currentUser) {
+      throw new NotFoundException(
+        `Current user with ID "${normalizedCurrentUserId}" not found`,
+      );
+    }
+
+    if (!targetUser) {
+      throw new NotFoundException(
+        `Target user with ID "${normalizedTargetUserId}" not found`,
+      );
+    }
+
+    const isFriend = friendship?.status === FriendshipStatus.ACCEPTED;
+    const hasOutgoingFriendRequest =
+      friendship?.status === FriendshipStatus.PENDING &&
+      String(friendship.requesterId) === normalizedCurrentUserId &&
+      String(friendship.receiverId) === normalizedTargetUserId;
+    const hasIncomingFriendRequest =
+      friendship?.status === FriendshipStatus.PENDING &&
+      String(friendship.requesterId) === normalizedTargetUserId &&
+      String(friendship.receiverId) === normalizedCurrentUserId;
+    const isFollowing = Boolean(follow);
+    const isPersonalTarget = targetUser.profileType === ProfileType.PERSONAL;
+    const isProfessionalTarget =
+      targetUser.profileType === ProfileType.PROFESSIONAL;
+
+    return {
+      profileType: targetUser.profileType,
+      isFriend,
+      hasIncomingFriendRequest,
+      hasOutgoingFriendRequest,
+      isFollowing,
+      canAddFriend:
+        !isSelf &&
+        isPersonalTarget &&
+        !isFriend &&
+        !hasIncomingFriendRequest &&
+        !hasOutgoingFriendRequest,
+      canFollow: !isSelf && isProfessionalTarget && !isFollowing,
+    };
   }
 
   private async findUsersByIds(

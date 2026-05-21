@@ -7,6 +7,7 @@ import { Song } from '../songs/schemas/song.schema';
 import { SongsService } from '../songs/songs.service';
 import { FollowCounts } from './schemas/follow.schema';
 import { RecentlyPlayedSong } from './schemas/recently-played.schema';
+import { RelationshipStatus } from './schemas/relationship-status.schema';
 import { User } from './schemas/user.schema';
 import { UsersService, type UserWithoutPassword } from './users.service';
 
@@ -84,6 +85,15 @@ export class UsersResolver {
     @Args('userId', { type: () => ID }) userId: string,
   ): Promise<FollowCounts> {
     return this.usersService.getFollowCounts(userId);
+  }
+
+  @Query(() => RelationshipStatus, { name: 'relationshipStatus' })
+  @UseGuards(JwtAuthGuard)
+  async relationshipStatus(
+    @CurrentUser('userId') currentUserId: string,
+    @Args('userId', { type: () => ID }) targetUserId: string,
+  ): Promise<RelationshipStatus> {
+    return this.usersService.getRelationshipStatus(currentUserId, targetUserId);
   }
 
   @Query(() => [Song], { name: 'likedSongs' })
