@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './schemas/user.schema';
 import { Friendship, FriendshipSchema } from './schemas/friendship.schema';
+import { Follow, FollowSchema } from './schemas/follow.schema';
 import {
   RecentlyPlayed,
   RecentlyPlayedSchema,
@@ -20,6 +21,7 @@ import { PlaylistsModule } from '../playlists/playlists.module';
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: Friendship.name, schema: FriendshipSchema },
+      { name: Follow.name, schema: FollowSchema },
       { name: UserLikedSong.name, schema: UserLikedSongSchema },
       { name: RecentlyPlayed.name, schema: RecentlyPlayedSchema },
     ]),

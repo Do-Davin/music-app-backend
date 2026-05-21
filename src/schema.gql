@@ -87,10 +87,25 @@ type Playlist {
   updatedAt: DateTime
 }
 
+type FollowCounts {
+  followers: Int!
+  following: Int!
+}
+
 type RecentlyPlayedSong {
   songId: ID!
   playedAt: DateTime!
   song: Song!
+}
+
+type RelationshipStatus {
+  profileType: ProfileType!
+  isFriend: Boolean!
+  hasIncomingFriendRequest: Boolean!
+  hasOutgoingFriendRequest: Boolean!
+  isFollowing: Boolean!
+  canAddFriend: Boolean!
+  canFollow: Boolean!
 }
 
 type AuthResponse {
@@ -168,6 +183,10 @@ type Query {
   myFriends(limit: Int, offset: Int): [User!]!
   incomingFriendRequests(limit: Int, offset: Int): [User!]!
   outgoingFriendRequests(limit: Int, offset: Int): [User!]!
+  myFollowing: [User!]!
+  myFollowers: [User!]!
+  followCounts(userId: ID!): FollowCounts!
+  relationshipStatus(userId: ID!): RelationshipStatus!
   likedSongs(limit: Int, offset: Int): [Song!]!
   recentlyPlayed(limit: Int): [RecentlyPlayedSong!]!
   referenceMaterials(type: String): [ReferenceMaterial!]!
@@ -189,6 +208,8 @@ type Mutation {
   acceptFriendRequest(userId: ID!): Boolean!
   rejectFriendRequest(userId: ID!): Boolean!
   cancelFriendRequest(userId: ID!): Boolean!
+  followUser(userId: ID!): Boolean!
+  unfollowUser(userId: ID!): Boolean!
   updateUsername(newUsername: String!): User!
   switchToProfessionalAccount: User!
   likeSong(songId: ID!): Boolean!
