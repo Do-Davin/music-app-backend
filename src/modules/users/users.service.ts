@@ -11,6 +11,7 @@ import {
   FriendshipDocument,
   FriendshipStatus,
 } from './schemas/friendship.schema';
+import { Follow, FollowCounts, FollowDocument } from './schemas/follow.schema';
 import {
   RecentlyPlayed,
   RecentlyPlayedDocument,
@@ -35,6 +36,8 @@ export class UsersService {
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Friendship.name)
     private friendshipModel: Model<FriendshipDocument>,
+    @InjectModel(Follow.name)
+    private followModel: Model<FollowDocument>,
     @InjectModel(UserLikedSong.name)
     private userLikedSongModel: Model<UserLikedSongDocument>,
     @InjectModel(RecentlyPlayed.name)
@@ -63,6 +66,10 @@ export class UsersService {
 
   private pairKey(firstUserId: string, secondUserId: string): string {
     return [firstUserId, secondUserId].sort().join(':');
+  }
+
+  private followPairKey(followerId: string, followingId: string): string {
+    return `${followerId}:${followingId}`;
   }
 
   private clampLimit(limit = 20, max = 50): number {
@@ -461,6 +468,132 @@ export class UsersService {
     return this.findUsersByIds(requests.map((request) => request.receiverId));
   }
 
+  async followUser(
+    currentUserId: string,
+    targetUserId: string,
+  ): Promise<boolean> {
+    const currentUserObjectId = this.toObjectId(
+      currentUserId,
+      'Current user ID',
+    );
+    const targetUserObjectId = this.toObjectId(targetUserId, 'Target user ID');
+    const normalizedCurrentUserId = String(currentUserObjectId);
+    const normalizedTargetUserId = String(targetUserObjectId);
+
+    if (normalizedCurrentUserId === normalizedTargetUserId) {
+      throw new BadRequestException('Cannot follow yourself');
+    }
+
+    const [currentUser, targetUser] = await Promise.all([
+      this.userModel.findById(currentUserObjectId).exec(),
+      this.userModel.findById(targetUserObjectId).exec(),
+    ]);
+
+    if (!currentUser) {
+      throw new NotFoundException(
+        `Current user with ID "${normalizedCurrentUserId}" not found`,
+      );
+    }
+
+    if (!targetUser) {
+      throw new NotFoundException(
+        `Target user with ID "${normalizedTargetUserId}" not found`,
+      );
+    }
+
+    if (targetUser.profileType !== ProfileType.PROFESSIONAL) {
+      throw new BadRequestException(
+        'Only professional accounts can be followed',
+      );
+    }
+
+    const pairKey = this.followPairKey(
+      normalizedCurrentUserId,
+      normalizedTargetUserId,
+    );
+
+    try {
+      await this.followModel.create({
+        followerId: currentUser._id,
+        followingId: targetUser._id,
+        pairKey,
+      });
+    } catch (error) {
+      if ((error as { code?: number }).code !== 11000) {
+        throw error;
+      }
+    }
+
+    return true;
+  }
+
+  async unfollowUser(
+    currentUserId: string,
+    targetUserId: string,
+  ): Promise<boolean> {
+    const currentUserObjectId = this.toObjectId(
+      currentUserId,
+      'Current user ID',
+    );
+    const targetUserObjectId = this.toObjectId(targetUserId, 'Target user ID');
+    const normalizedCurrentUserId = String(currentUserObjectId);
+    const normalizedTargetUserId = String(targetUserObjectId);
+
+    if (normalizedCurrentUserId === normalizedTargetUserId) {
+      throw new BadRequestException('Cannot unfollow yourself');
+    }
+
+    await this.followModel
+      .deleteOne({
+        pairKey: this.followPairKey(
+          normalizedCurrentUserId,
+          normalizedTargetUserId,
+        ),
+      })
+      .exec();
+
+    return true;
+  }
+
+  async getFollowing(currentUserId: string): Promise<UserWithoutPassword[]> {
+    this.validateObjectId(currentUserId, 'Current user ID');
+    await this.ensureUserExists(currentUserId, 'Current user');
+
+    const follows = await this.followModel
+      .find({ followerId: this.toObjectId(currentUserId, 'Current user ID') })
+      .sort({ createdAt: -1 })
+      .lean()
+      .exec();
+
+    return this.findUsersByIds(follows.map((follow) => follow.followingId));
+  }
+
+  async getFollowers(currentUserId: string): Promise<UserWithoutPassword[]> {
+    this.validateObjectId(currentUserId, 'Current user ID');
+    await this.ensureUserExists(currentUserId, 'Current user');
+
+    const follows = await this.followModel
+      .find({ followingId: this.toObjectId(currentUserId, 'Current user ID') })
+      .sort({ createdAt: -1 })
+      .lean()
+      .exec();
+
+    return this.findUsersByIds(follows.map((follow) => follow.followerId));
+  }
+
+  async getFollowCounts(userId: string): Promise<FollowCounts> {
+    this.validateObjectId(userId, 'User ID');
+    await this.ensureUserExists(userId);
+
+    const userObjectId = this.toObjectId(userId, 'User ID');
+    const [followers, following] = await Promise.all([
+      this.followModel.countDocuments({ followingId: userObjectId }).exec(),
+      this.followModel.countDocuments({ followerId: userObjectId }).exec(),
+    ]);
+
+    return { followers, following };
+  }
+
   private async findUsersByIds(
     ids: Types.ObjectId[],
   ): Promise<UserWithoutPassword[]> {
@@ -777,6 +910,14 @@ export class UsersService {
           $or: [
             { requesterId: this.toObjectId(userId, 'User ID') },
             { receiverId: this.toObjectId(userId, 'User ID') },
+          ],
+        })
+        .exec(),
+      this.followModel
+        .deleteMany({
+          $or: [
+            { followerId: this.toObjectId(userId, 'User ID') },
+            { followingId: this.toObjectId(userId, 'User ID') },
           ],
         })
         .exec(),

@@ -5,6 +5,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PlaylistsService } from '../playlists/playlists.service';
 import { Song } from '../songs/schemas/song.schema';
 import { SongsService } from '../songs/songs.service';
+import { FollowCounts } from './schemas/follow.schema';
 import { RecentlyPlayedSong } from './schemas/recently-played.schema';
 import { User } from './schemas/user.schema';
 import { UsersService, type UserWithoutPassword } from './users.service';
@@ -59,6 +60,30 @@ export class UsersResolver {
     @Args('offset', { type: () => Int, nullable: true }) offset?: number,
   ): Promise<UserWithoutPassword[]> {
     return this.usersService.getOutgoingFriendRequests(userId, limit, offset);
+  }
+
+  @Query(() => [User], { name: 'myFollowing' })
+  @UseGuards(JwtAuthGuard)
+  async getMyFollowing(
+    @CurrentUser('userId') userId: string,
+  ): Promise<UserWithoutPassword[]> {
+    return this.usersService.getFollowing(userId);
+  }
+
+  @Query(() => [User], { name: 'myFollowers' })
+  @UseGuards(JwtAuthGuard)
+  async getMyFollowers(
+    @CurrentUser('userId') userId: string,
+  ): Promise<UserWithoutPassword[]> {
+    return this.usersService.getFollowers(userId);
+  }
+
+  @Query(() => FollowCounts, { name: 'followCounts' })
+  @UseGuards(JwtAuthGuard)
+  async followCounts(
+    @Args('userId', { type: () => ID }) userId: string,
+  ): Promise<FollowCounts> {
+    return this.usersService.getFollowCounts(userId);
   }
 
   @Query(() => [Song], { name: 'likedSongs' })
@@ -133,6 +158,24 @@ export class UsersResolver {
     @Args('userId', { type: () => ID }) targetUserId: string,
   ): Promise<boolean> {
     return this.usersService.cancelFriendRequest(currentUserId, targetUserId);
+  }
+
+  @Mutation(() => Boolean, { name: 'followUser' })
+  @UseGuards(JwtAuthGuard)
+  async followUser(
+    @CurrentUser('userId') currentUserId: string,
+    @Args('userId', { type: () => ID }) targetUserId: string,
+  ): Promise<boolean> {
+    return this.usersService.followUser(currentUserId, targetUserId);
+  }
+
+  @Mutation(() => Boolean, { name: 'unfollowUser' })
+  @UseGuards(JwtAuthGuard)
+  async unfollowUser(
+    @CurrentUser('userId') currentUserId: string,
+    @Args('userId', { type: () => ID }) targetUserId: string,
+  ): Promise<boolean> {
+    return this.usersService.unfollowUser(currentUserId, targetUserId);
   }
 
   @Mutation(() => User, { name: 'updateUsername' })
