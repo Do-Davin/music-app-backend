@@ -33,7 +33,7 @@ export const KaraokeLyricLineSchema =
   SchemaFactory.createForClass(KaraokeLyricLine);
 
 @ObjectType()
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, collection: 'karaoke_songs' })
 export class KaraokeSong {
   @Field(() => ID)
   _id: Types.ObjectId;

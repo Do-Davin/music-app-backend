@@ -1,7 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
-@Schema({ timestamps: { createdAt: true, updatedAt: false } })
+@Schema({
+  timestamps: { createdAt: true, updatedAt: false },
+  collection: 'user_liked_songs',
+})
 export class UserLikedSong {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
   userId: Types.ObjectId;

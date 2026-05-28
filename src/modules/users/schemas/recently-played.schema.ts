@@ -15,7 +15,7 @@ export class RecentlyPlayedSong {
   song: Song;
 }
 
-@Schema()
+@Schema({ collection: 'recently_playeds' })
 export class RecentlyPlayed {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
   userId: Types.ObjectId;
