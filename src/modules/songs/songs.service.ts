@@ -41,18 +41,36 @@ export class SongsService {
     updateSongInput: UpdateSongInput,
   ): Promise<Song> {
     const { id, ...updateData } = updateSongInput;
+    
+    const song = await this.songModel.findById(id).exec();
+    if (!song) {
+      throw new NotFoundException(`Song with ID "${id}" not found`);
+    }
+
+    const isOwner = song.userId?.toString() === userId;
+    
+    if (!isOwner) {
+      // Non-owners are only allowed to update lyrics. We silently discard
+      // updates to other fields rather than throwing a permission error.
+      const lyricsValue = updateData.lyrics;
+      Object.keys(updateData).forEach((key) => {
+        delete updateData[key];
+      });
+      if (lyricsValue !== undefined) {
+        updateData.lyrics = lyricsValue;
+      }
+    }
+
     const updated = await this.songModel
-      .findOneAndUpdate(
-        { _id: id, userId: new Types.ObjectId(userId) },
+      .findByIdAndUpdate(
+        id,
         { $set: updateData },
         { new: true },
       )
       .exec();
 
     if (!updated) {
-      throw new NotFoundException(
-        `Song not found or you don't have permission`,
-      );
+      throw new NotFoundException(`Song not found`);
     }
 
     return updated;

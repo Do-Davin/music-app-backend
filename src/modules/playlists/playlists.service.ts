@@ -46,6 +46,7 @@ export class PlaylistsService {
         $or: [
           { userId: new Types.ObjectId(userId) },
           { ownerId: new Types.ObjectId(userId) },
+          { isPublic: true },
         ],
       })
       .exec();

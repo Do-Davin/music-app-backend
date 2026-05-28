@@ -13,9 +13,9 @@ export class Playlist {
   @Prop({ type: Types.ObjectId, ref: 'User' })
   ownerId?: Types.ObjectId;
 
-  @Field(() => ID)
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  userId: Types.ObjectId;
+  @Field(() => ID, { nullable: true })
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  userId?: Types.ObjectId;
 
   @Field()
   @Prop({ required: true })
