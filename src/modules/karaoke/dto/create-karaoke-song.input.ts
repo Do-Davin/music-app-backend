@@ -1,8 +1,8 @@
-import { Field, Float, ID, InputType } from '@nestjs/graphql';
+import { Field, Float, InputType } from '@nestjs/graphql';
 import { KaraokeSongSource } from '../schemas/karaoke-song.schema';
 
 @InputType()
-export class KaraokeLyricLineInput {
+export class KaraokeLyricWordInput {
   @Field(() => Float)
   timestamp: number;
 
@@ -11,10 +11,19 @@ export class KaraokeLyricLineInput {
 }
 
 @InputType()
-export class CreateKaraokeSongInput {
-  @Field(() => ID)
-  userId: string;
+export class KaraokeLyricLineInput {
+  @Field(() => Float)
+  timestamp: number;
 
+  @Field()
+  text: string;
+
+  @Field(() => [KaraokeLyricWordInput], { nullable: true })
+  words?: KaraokeLyricWordInput[];
+}
+
+@InputType()
+export class CreateKaraokeSongInput {
   @Field()
   title: string;
 

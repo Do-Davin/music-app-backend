@@ -28,8 +28,8 @@ export class SongsResolver {
 
   @Query(() => [Song], { name: 'mySongs' })
   @UseGuards(JwtAuthGuard)
-  async findMySongs(@CurrentUser() user: User): Promise<Song[]> {
-    return this.songsService.findByUser(user._id.toString());
+  async findMySongs(@CurrentUser('userId') userId: string): Promise<Song[]> {
+    return this.songsService.findByUser(userId);
   }
 
   @Query(() => [Song], { name: 'searchSongs' })
@@ -87,10 +87,10 @@ export class SongsResolver {
   @Mutation(() => Song)
   @UseGuards(JwtAuthGuard)
   async updateSong(
-    @CurrentUser() user: User,
+    @CurrentUser('userId') userId: string,
     @Args('updateSongInput') updateSongInput: UpdateSongInput,
   ): Promise<Song> {
-    return this.songsService.update(user._id.toString(), updateSongInput);
+    return this.songsService.update(userId, updateSongInput);
   }
 
   /**
@@ -104,9 +104,9 @@ export class SongsResolver {
   @Mutation(() => Boolean)
   @UseGuards(JwtAuthGuard)
   async removeSong(
-    @CurrentUser() user: User,
+    @CurrentUser('userId') userId: string,
     @Args('id', { type: () => ID }) id: string,
   ): Promise<boolean> {
-    return this.songsService.remove(user._id.toString(), id);
+    return this.songsService.remove(userId, id);
   }
 }
