@@ -18,12 +18,20 @@ export class KaraokeService {
     return 'Karaoke backend module is running';
   }
 
-  async findAll(): Promise<KaraokeSong[]> {
-    return this.karaokeSongModel.find().sort({ createdAt: -1 }).exec();
+  async findByUser(userId: string): Promise<KaraokeSong[]> {
+    return this.karaokeSongModel.find({ userId }).sort({ createdAt: -1 }).exec();
   }
 
-  async create(input: CreateKaraokeSongInput): Promise<KaraokeSong> {
-    const karaokeSong = new this.karaokeSongModel(input);
-    return karaokeSong.save();
+  async create(
+    userId: string,
+    input: CreateKaraokeSongInput,
+  ): Promise<KaraokeSong> {
+    return this.karaokeSongModel
+      .findOneAndUpdate(
+        { userId, source: input.source, sourcePath: input.sourcePath },
+        { $set: { ...input, userId } },
+        { new: true, upsert: true, setDefaultsOnInsert: true },
+      )
+      .exec();
   }
 }

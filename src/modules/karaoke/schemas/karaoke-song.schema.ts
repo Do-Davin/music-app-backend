@@ -17,6 +17,25 @@ registerEnumType(KaraokeSongSource, {
   name: 'KaraokeSongSource',
 });
 
+// ── Word-level timing ────────────────────────────────────────────────────────
+
+@ObjectType()
+@Schema({ _id: false })
+export class KaraokeLyricWord {
+  @Field(() => Float)
+  @Prop({ required: true })
+  timestamp: number;
+
+  @Field()
+  @Prop({ required: true })
+  text: string;
+}
+
+export const KaraokeLyricWordSchema =
+  SchemaFactory.createForClass(KaraokeLyricWord);
+
+// ── Line-level timing (contains optional word-level timing) ──────────────────
+
 @ObjectType()
 @Schema({ _id: false })
 export class KaraokeLyricLine {
@@ -27,6 +46,10 @@ export class KaraokeLyricLine {
   @Field()
   @Prop({ required: true })
   text: string;
+
+  @Field(() => [KaraokeLyricWord], { nullable: true })
+  @Prop({ type: [KaraokeLyricWordSchema], default: undefined })
+  words?: KaraokeLyricWord[];
 }
 
 export const KaraokeLyricLineSchema =
