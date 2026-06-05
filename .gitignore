@@ -42,6 +42,10 @@ lerna-debug.log*
 .env.production.local
 .env.local
 
+# Local secrets
+secrets/
+drawio/
+
 # temp directory
 .temp
 .tmp

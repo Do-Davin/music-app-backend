@@ -82,6 +82,22 @@ export class User {
   @Prop()
   profileImageUrl?: string;
 
+  @Field({ nullable: true })
+  @Prop()
+  profileImageKey?: string;
+
+  @Field({ nullable: true })
+  @Prop()
+  profileImageUpdatedAt?: Date;
+
+  @Field({ nullable: true })
+  @Prop()
+  profileImageContentType?: string;
+
+  @Field(() => Int, { nullable: true })
+  @Prop()
+  profileImageSize?: number;
+
   @Field(() => ProfileType)
   @Prop({
     enum: ProfileType,

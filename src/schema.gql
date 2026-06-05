@@ -74,6 +74,10 @@ type User {
   username: String
   email: String!
   profileImageUrl: String
+  profileImageKey: String
+  profileImageUpdatedAt: DateTime
+  profileImageContentType: String
+  profileImageSize: Int
   profileType: ProfileType!
   practiceGoals: PracticeGoals
   practiceStreak: PracticeStreak

@@ -12,7 +12,10 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
 
-  app.use(graphqlUploadExpress({ maxFileSize: 50000000, maxFiles: 10 }));
+  app.use(
+    '/graphql',
+    graphqlUploadExpress({ maxFileSize: 50000000, maxFiles: 10 }),
+  );
   app.use('/uploads', express.static(join(process.cwd(), 'uploads')));
 
   // Allow the web client (running on a different localhost port) to call the GraphQL API.

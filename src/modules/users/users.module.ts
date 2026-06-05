@@ -15,6 +15,8 @@ import { UsersService } from './users.service';
 import { UsersResolver } from './users.resolver';
 import { SongsModule } from '../songs/songs.module';
 import { PlaylistsModule } from '../playlists/playlists.module';
+import { CloudinaryStorageModule } from '../storage/cloudinary-storage.module';
+import { UsersController } from './users.controller';
 
 @Module({
   imports: [
@@ -27,7 +29,9 @@ import { PlaylistsModule } from '../playlists/playlists.module';
     ]),
     SongsModule,
     PlaylistsModule,
+    CloudinaryStorageModule,
   ],
+  controllers: [UsersController],
   providers: [UsersService, UsersResolver],
   exports: [UsersService],
 })
