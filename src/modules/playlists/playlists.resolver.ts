@@ -99,6 +99,10 @@ export class PlaylistsResolver {
 
   @ResolveField(() => [Song], { name: 'songs', nullable: true })
   async songs(@Parent() playlist: Playlist): Promise<Song[]> {
-    return this.songsService.findManyByIds(playlist.songIds ?? []);
+    console.log(`[GraphQL Resolver] Resolving songs for playlist: ${playlist.name} (ID: ${playlist._id})`);
+    console.log(`[GraphQL Resolver] playlist.songIds:`, playlist.songIds);
+    const resolved = await this.songsService.findManyByIds(playlist.songIds ?? []);
+    console.log(`[GraphQL Resolver] Resolved songs count: ${resolved.length}`);
+    return resolved;
   }
 }

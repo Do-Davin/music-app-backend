@@ -1,4 +1,4 @@
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Query, Resolver, ID } from '@nestjs/graphql';
 import { KaraokeSong } from './schemas/karaoke-song.schema';
 import { KaraokeService } from './karaoke.service';
 import { CreateKaraokeSongInput } from './dto/create-karaoke-song.input';
@@ -22,5 +22,12 @@ export class KaraokeResolver {
     @Args('input') input: CreateKaraokeSongInput,
   ): Promise<KaraokeSong> {
     return this.karaokeService.create(input);
+  }
+
+  @Mutation(() => Boolean)
+  async removeKaraokeSong(
+    @Args('id', { type: () => ID }) id: string,
+  ): Promise<boolean> {
+    return this.karaokeService.remove(id);
   }
 }
