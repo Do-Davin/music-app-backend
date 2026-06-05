@@ -19,7 +19,10 @@ export class KaraokeService {
   }
 
   async findByUser(userId: string): Promise<KaraokeSong[]> {
-    return this.karaokeSongModel.find({ userId }).sort({ createdAt: -1 }).exec();
+    return this.karaokeSongModel
+      .find({ userId })
+      .sort({ createdAt: -1 })
+      .exec();
   }
 
   async create(
@@ -33,5 +36,12 @@ export class KaraokeService {
         { new: true, upsert: true, setDefaultsOnInsert: true },
       )
       .exec();
+  }
+
+  async remove(userId: string, id: string): Promise<boolean> {
+    const result = await this.karaokeSongModel
+      .deleteOne({ _id: id, userId })
+      .exec();
+    return result.deletedCount > 0;
   }
 }

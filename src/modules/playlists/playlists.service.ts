@@ -41,11 +41,34 @@ export class PlaylistsService {
 
   async findByUser(userId: string): Promise<Playlist[]> {
     this.validateObjectId(userId, 'User ID');
+    const userObjectId = new Types.ObjectId(userId);
+
+    // Auto-create "Personal" playlist if it doesn't exist yet
+    const personalPlaylist = await this.playlistModel
+      .findOne({
+        name: 'Personal',
+        $or: [{ userId: userObjectId }, { ownerId: userObjectId }],
+      })
+      .exec();
+
+    if (!personalPlaylist) {
+      const created = new this.playlistModel({
+        ownerId: userObjectId,
+        userId: userObjectId,
+        name: 'Personal',
+        description: 'Your personal music library',
+        coverImageUrl: null,
+        songIds: [],
+        isPublic: false,
+      });
+      await created.save();
+    }
+
     return this.playlistModel
       .find({
         $or: [
-          { userId: new Types.ObjectId(userId) },
-          { ownerId: new Types.ObjectId(userId) },
+          { userId: userObjectId },
+          { ownerId: userObjectId },
           { isPublic: true },
         ],
       })

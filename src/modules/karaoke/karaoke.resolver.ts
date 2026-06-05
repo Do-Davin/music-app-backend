@@ -1,4 +1,4 @@
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -28,5 +28,14 @@ export class KaraokeResolver {
     @Args('input') input: CreateKaraokeSongInput,
   ): Promise<KaraokeSong> {
     return this.karaokeService.create(userId, input);
+  }
+
+  @Mutation(() => Boolean)
+  @UseGuards(JwtAuthGuard)
+  async removeKaraokeSong(
+    @CurrentUser('userId') userId: string,
+    @Args('id', { type: () => ID }) id: string,
+  ): Promise<boolean> {
+    return this.karaokeService.remove(userId, id);
   }
 }
