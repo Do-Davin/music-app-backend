@@ -30,6 +30,16 @@ export type RecentlyPlayedEntry = {
   songId: Types.ObjectId;
   playedAt: Date;
 };
+export type ProfileImageMetadata = {
+  url: string;
+  key: string;
+  contentType: string;
+  size: number;
+};
+export type UpdateProfileImageMetadataResult = {
+  user: UserWithoutPassword;
+  oldProfileImageKey?: string;
+};
 
 @Injectable()
 export class UsersService {
@@ -734,6 +744,50 @@ export class UsersService {
     }
 
     return this.stripPassword(updatedUser);
+  }
+
+  async updateProfileImageMetadata(
+    userId: string,
+    metadata: ProfileImageMetadata,
+  ): Promise<UpdateProfileImageMetadataResult> {
+    this.validateObjectId(userId, 'User ID');
+
+    if (!metadata.url?.trim()) {
+      throw new BadRequestException('Image URL cannot be empty');
+    }
+
+    if (!metadata.key?.trim()) {
+      throw new BadRequestException('Image key cannot be empty');
+    }
+
+    if (!metadata.contentType?.trim()) {
+      throw new BadRequestException('Image content type cannot be empty');
+    }
+
+    if (!Number.isInteger(metadata.size) || metadata.size < 1) {
+      throw new BadRequestException('Image size must be a positive integer');
+    }
+
+    const currentUser = await this.userModel.findById(userId).exec();
+
+    if (!currentUser) {
+      throw new NotFoundException(`User with ID "${userId}" not found`);
+    }
+
+    const oldProfileImageKey = currentUser.profileImageKey;
+
+    currentUser.profileImageUrl = metadata.url.trim();
+    currentUser.profileImageKey = metadata.key.trim();
+    currentUser.profileImageUpdatedAt = new Date();
+    currentUser.profileImageContentType = metadata.contentType.trim();
+    currentUser.profileImageSize = metadata.size;
+
+    const updatedUser = await currentUser.save();
+
+    return {
+      user: this.stripPassword(updatedUser),
+      oldProfileImageKey,
+    };
   }
 
   async addLikedSong(userId: string, songId: string): Promise<boolean> {
