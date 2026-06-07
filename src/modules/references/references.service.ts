@@ -1,17 +1,42 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { ReferenceMaterial, ReferenceMaterialDocument } from './schemas/reference-material.schema';
+import {
+  ReferenceMaterial,
+  ReferenceMaterialDocument,
+} from './schemas/reference-material.schema';
 import { CreateReferenceMaterialInput } from './dto/create-reference-material.input';
 import { UpdateReferenceMaterialInput } from './dto/update-reference-material.input';
 import { FileUploadUtil } from '../common/utils/file-upload.util';
+import { Song, SongDocument } from '../songs/schemas/song.schema';
 
 @Injectable()
 export class ReferencesService {
   constructor(
     @InjectModel(ReferenceMaterial.name)
     private referenceMaterialModel: Model<ReferenceMaterialDocument>,
+    @InjectModel(Song.name)
+    private songModel: Model<SongDocument>,
   ) {}
+
+  private async validateSongOwnership(
+    userId: string,
+    songId: string,
+  ): Promise<void> {
+    const song = await this.songModel.findById(songId).exec();
+    if (!song) {
+      throw new NotFoundException(`Song with ID ${songId} not found`);
+    }
+    if (song.userId.toString() !== userId) {
+      throw new ForbiddenException(
+        'Only the owner of the song can manage its reference materials',
+      );
+    }
+  }
 
   async findAll(type?: string): Promise<ReferenceMaterialDocument[]> {
     const filter = type ? { type } : {};
@@ -26,7 +51,14 @@ export class ReferencesService {
     return material;
   }
 
-  async create(input: CreateReferenceMaterialInput): Promise<ReferenceMaterialDocument> {
+  async create(
+    userId: string,
+    input: CreateReferenceMaterialInput,
+  ): Promise<ReferenceMaterialDocument> {
+    if (input.songId) {
+      await this.validateSongOwnership(userId, input.songId);
+    }
+
     let fileData = {};
 
     if (input.file) {
@@ -51,8 +83,23 @@ export class ReferencesService {
     return material.save();
   }
 
-  async update(id: string, input: UpdateReferenceMaterialInput): Promise<ReferenceMaterialDocument> {
+  async update(
+    userId: string,
+    id: string,
+    input: UpdateReferenceMaterialInput,
+  ): Promise<ReferenceMaterialDocument> {
     const material = await this.findOne(id);
+
+    // Check ownership of the current song associated with this material
+    if (material.songId) {
+      await this.validateSongOwnership(userId, material.songId);
+    }
+
+    // If changing to a new song, check ownership of that song too
+    if (input.songId && input.songId !== material.songId) {
+      await this.validateSongOwnership(userId, input.songId);
+    }
+
     let fileData = {};
 
     if (input.file) {
@@ -73,7 +120,8 @@ export class ReferencesService {
     // Surgical update to avoid passing the file promise to the model
     if (input.title !== undefined) material.title = input.title;
     if (input.type !== undefined) material.type = input.type;
-    if (input.description !== undefined) material.description = input.description;
+    if (input.description !== undefined)
+      material.description = input.description;
     if (input.songId !== undefined) material.songId = input.songId;
     if (input.topic !== undefined) material.topic = input.topic;
 
@@ -84,8 +132,12 @@ export class ReferencesService {
     return material.save();
   }
 
-  async delete(id: string): Promise<boolean> {
+  async delete(userId: string, id: string): Promise<boolean> {
     const material = await this.findOne(id);
+
+    if (material.songId) {
+      await this.validateSongOwnership(userId, material.songId);
+    }
 
     // CHANGED: Delete associated file
     if (material.filePath) {

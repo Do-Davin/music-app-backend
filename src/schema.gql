@@ -22,7 +22,7 @@ type Song {
   isPublic: Boolean
   playCount: Int
   lastPlayedAt: DateTime
-  userId: ID!
+  userId: ID
   createdAt: DateTime
   updatedAt: DateTime
 }
@@ -214,6 +214,7 @@ type Mutation {
   removePlaylist(id: ID!): Boolean!
   addSongToPlaylist(playlistId: ID!, songId: ID!): Playlist!
   removeSongFromPlaylist(playlistId: ID!, songId: ID!): Playlist!
+  moveSongBetweenPlaylists(fromPlaylistId: ID!, toPlaylistId: ID!, songId: ID!): Playlist!
   sendFriendRequest(userId: ID!): Boolean!
   acceptFriendRequest(userId: ID!): Boolean!
   rejectFriendRequest(userId: ID!): Boolean!

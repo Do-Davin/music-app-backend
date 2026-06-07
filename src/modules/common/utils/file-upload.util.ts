@@ -17,7 +17,7 @@ export class FileUploadUtil {
     }
 
     const { createReadStream, filename, mimetype } = await file;
-    
+
     // Generate unique filename
     const timestamp = Date.now();
     const uniqueFilename = `${timestamp}-${filename}`;
@@ -28,7 +28,7 @@ export class FileUploadUtil {
       const writeStream = createWriteStream(filePath);
       let fileSize = 0;
 
-      stream.on('data', (chunk) => {
+      stream.on('data', (chunk: Buffer) => {
         fileSize += chunk.length;
       });
 

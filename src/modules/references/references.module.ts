@@ -6,12 +6,14 @@ import {
 } from './schemas/reference-material.schema';
 import { ReferencesService } from './references.service';
 import { ReferencesResolver } from './references.resolver';
+import { SongsModule } from '../songs/songs.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: ReferenceMaterial.name, schema: ReferenceMaterialSchema },
     ]),
+    SongsModule,
   ],
   providers: [ReferencesService, ReferencesResolver],
 })

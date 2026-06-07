@@ -9,6 +9,6 @@ import { SongsResolver } from './songs.resolver';
     MongooseModule.forFeature([{ name: Song.name, schema: SongSchema }]),
   ],
   providers: [SongsService, SongsResolver],
-  exports: [SongsService],
+  exports: [SongsService, MongooseModule],
 })
 export class SongsModule {}

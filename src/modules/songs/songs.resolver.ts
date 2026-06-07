@@ -6,7 +6,6 @@ import { UpdateSongInput } from './dto/update-song.input';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { User } from '../users/schemas/user.schema';
 
 @Resolver(() => Song)
 export class SongsResolver {
@@ -20,9 +19,7 @@ export class SongsResolver {
   }
 
   @Query(() => Song, { name: 'song' })
-  async findOne(
-    @Args('id', { type: () => ID }) id: string,
-  ): Promise<Song> {
+  async findOne(@Args('id', { type: () => ID }) id: string): Promise<Song> {
     return this.songsService.findOne(id);
   }
 
