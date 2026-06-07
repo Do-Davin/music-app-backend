@@ -38,8 +38,13 @@ export class ReferencesService {
     }
   }
 
-  async findAll(type?: string): Promise<ReferenceMaterialDocument[]> {
-    const filter = type ? { type } : {};
+  async findAll(
+    type?: string,
+    songId?: string,
+  ): Promise<ReferenceMaterialDocument[]> {
+    const filter: any = {};
+    if (type) filter.type = type;
+    if (songId) filter.songId = songId;
     return this.referenceMaterialModel.find(filter).exec();
   }
 

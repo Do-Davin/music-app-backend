@@ -14,8 +14,9 @@ export class ReferencesResolver {
   @Query(() => [ReferenceMaterial], { name: 'referenceMaterials' })
   async findAll(
     @Args('type', { type: () => String, nullable: true }) type?: string,
+    @Args('songId', { type: () => String, nullable: true }) songId?: string,
   ): Promise<ReferenceMaterial[]> {
-    return this.referencesService.findAll(type);
+    return this.referencesService.findAll(type, songId);
   }
 
   @Query(() => ReferenceMaterial, { name: 'referenceMaterial' })
