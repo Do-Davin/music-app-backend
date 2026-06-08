@@ -256,4 +256,64 @@ export class PlaylistsService {
     }
     return playlist;
   }
+
+  async moveSongBetweenPlaylists(
+    userId: string,
+    fromPlaylistId: string,
+    toPlaylistId: string,
+    songId: string,
+  ): Promise<Playlist> {
+    this.validateObjectId(userId, 'User ID');
+    this.validateObjectId(fromPlaylistId, 'From Playlist ID');
+    this.validateObjectId(toPlaylistId, 'To Playlist ID');
+    this.validateObjectId(songId, 'Song ID');
+
+    const userObjectId = new Types.ObjectId(userId);
+    const songObjectId = new Types.ObjectId(songId);
+
+    // 1. Remove from source playlist
+    const fromPlaylist = await this.playlistModel
+      .findOneAndUpdate(
+        {
+          _id: fromPlaylistId,
+          $or: [{ userId: userObjectId }, { ownerId: userObjectId }],
+        },
+        { $pull: { songIds: songObjectId } },
+        { new: true },
+      )
+      .exec();
+
+    if (!fromPlaylist) {
+      throw new NotFoundException(
+        `Source playlist not found or you don't have permission`,
+      );
+    }
+
+    // 2. Add to destination playlist
+    const toPlaylist = await this.playlistModel
+      .findOneAndUpdate(
+        {
+          _id: toPlaylistId,
+          $or: [{ userId: userObjectId }, { ownerId: userObjectId }],
+        },
+        { $addToSet: { songIds: songObjectId } },
+        { new: true },
+      )
+      .exec();
+
+    if (!toPlaylist) {
+      // Rollback: put it back in the source playlist
+      await this.playlistModel
+        .findByIdAndUpdate(fromPlaylistId, {
+          $addToSet: { songIds: songObjectId },
+        })
+        .exec();
+
+      throw new NotFoundException(
+        `Destination playlist not found or you don't have permission`,
+      );
+    }
+
+    return toPlaylist;
+  }
 }

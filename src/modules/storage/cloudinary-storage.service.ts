@@ -37,7 +37,7 @@ export class CloudinaryStorageService {
         },
         (error, result) => {
           if (error) {
-            reject(error);
+            reject(new Error(error.message || 'Cloudinary upload failed'));
             return;
           }
 

@@ -1,4 +1,4 @@
-import { InputType, Field, Int, PartialType, ID } from '@nestjs/graphql';
+import { InputType, Field, ID, PartialType } from '@nestjs/graphql';
 import { CreateSongInput } from './create-song.input';
 
 @InputType()

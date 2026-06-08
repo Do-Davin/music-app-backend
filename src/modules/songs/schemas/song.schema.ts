@@ -1,10 +1,4 @@
-import {
-  ObjectType,
-  Field,
-  ID,
-  Int,
-  registerEnumType,
-} from '@nestjs/graphql';
+import { ObjectType, Field, ID, Int, registerEnumType } from '@nestjs/graphql';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
@@ -105,8 +99,8 @@ export class Song {
   @Prop()
   lastPlayedAt: Date;
 
-  @Field(() => ID)
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  @Field(() => ID, { nullable: true })
+  @Prop({ type: Types.ObjectId, ref: 'User' })
   userId: Types.ObjectId;
 
   @Field({ nullable: true })

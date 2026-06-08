@@ -97,10 +97,26 @@ export class PlaylistsResolver {
     return this.playlistsService.removeSong(userId, playlistId, songId);
   }
 
+  @Mutation(() => Playlist)
+  @UseGuards(JwtAuthGuard)
+  async moveSongBetweenPlaylists(
+    @CurrentUser('userId') userId: string,
+    @Args('fromPlaylistId', { type: () => ID }) fromPlaylistId: string,
+    @Args('toPlaylistId', { type: () => ID }) toPlaylistId: string,
+    @Args('songId', { type: () => ID }) songId: string,
+  ): Promise<Playlist> {
+    return this.playlistsService.moveSongBetweenPlaylists(
+      userId,
+      fromPlaylistId,
+      toPlaylistId,
+      songId,
+    );
+  }
+
   @ResolveField(() => [Song], { name: 'songs', nullable: true })
   async songs(@Parent() playlist: Playlist): Promise<Song[]> {
     console.log(
-      `[GraphQL Resolver] Resolving songs for playlist: ${playlist.name} (ID: ${playlist._id})`,
+      `[GraphQL Resolver] Resolving songs for playlist: ${playlist.name} (ID: ${playlist._id.toString()})`,
     );
     console.log(`[GraphQL Resolver] playlist.songIds:`, playlist.songIds);
     const resolved = await this.songsService.findManyByIds(

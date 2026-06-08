@@ -15,9 +15,9 @@ export class ReferenceMaterial {
   title: string;
 
   @Field()
-  @Prop({ 
-    required: true, 
-    enum: ['PDF', 'PPT', 'PTT', 'Sheet Music', 'Note', 'Doc', 'Other'] 
+  @Prop({
+    required: true,
+    enum: ['PDF', 'PPT', 'PTT', 'Sheet Music', 'Note', 'Doc', 'Other'],
   })
   type: string;
 
@@ -58,9 +58,10 @@ export class ReferenceMaterial {
 
   @Field({ nullable: true })
   createdAt: Date;
-  
+
   @Field({ nullable: true })
   updatedAt: Date;
 }
 
-export const ReferenceMaterialSchema = SchemaFactory.createForClass(ReferenceMaterial);
+export const ReferenceMaterialSchema =
+  SchemaFactory.createForClass(ReferenceMaterial);

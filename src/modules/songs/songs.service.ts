@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { CreateSongInput } from './dto/create-song.input';
@@ -13,6 +17,20 @@ export class SongsService {
     userId: string,
     createSongInput: CreateSongInput,
   ): Promise<Song> {
+    // Check for duplicate song title for this user
+    const existing = await this.songModel
+      .findOne({
+        userId: new Types.ObjectId(userId),
+        title: { $regex: new RegExp(`^${createSongInput.title}$`, 'i') },
+      })
+      .exec();
+
+    if (existing) {
+      throw new BadRequestException(
+        `A song with title "${createSongInput.title}" already exists in your library.`,
+      );
+    }
+
     const newSong = new this.songModel({
       ...createSongInput,
       userId: new Types.ObjectId(userId),
@@ -41,14 +59,14 @@ export class SongsService {
     updateSongInput: UpdateSongInput,
   ): Promise<Song> {
     const { id, ...updateData } = updateSongInput;
-    
+
     const song = await this.songModel.findById(id).exec();
     if (!song) {
       throw new NotFoundException(`Song with ID "${id}" not found`);
     }
 
     const isOwner = song.userId?.toString() === userId;
-    
+
     if (!isOwner) {
       // Non-owners are only allowed to update lyrics. We silently discard
       // updates to other fields rather than throwing a permission error.
@@ -62,11 +80,7 @@ export class SongsService {
     }
 
     const updated = await this.songModel
-      .findByIdAndUpdate(
-        id,
-        { $set: updateData },
-        { new: true },
-      )
+      .findByIdAndUpdate(id, { $set: updateData }, { new: true })
       .exec();
 
     if (!updated) {
@@ -92,7 +106,7 @@ export class SongsService {
 
   async search(query: string): Promise<Song[]> {
     if (!query) return [];
-    
+
     const searchRegex = new RegExp(query, 'i');
     return this.songModel
       .find({
