@@ -199,7 +199,7 @@ type Query {
   relationshipStatus(userId: ID!): RelationshipStatus!
   likedSongs(limit: Int, offset: Int): [Song!]!
   recentlyPlayed(limit: Int): [RecentlyPlayedSong!]!
-  referenceMaterials(type: String): [ReferenceMaterial!]!
+  referenceMaterials(type: String, songId: String): [ReferenceMaterial!]!
   referenceMaterial(id: ID!): ReferenceMaterial!
   karaokeHealth: String!
   karaokeSongs: [KaraokeSong!]!
