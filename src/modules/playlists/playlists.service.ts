@@ -43,10 +43,10 @@ export class PlaylistsService {
     this.validateObjectId(userId, 'User ID');
     const userObjectId = new Types.ObjectId(userId);
 
-    // Auto-create "Personal" playlist if it doesn't exist yet
+    // Auto-create "My Uploading" playlist if it doesn't exist yet
     const personalPlaylist = await this.playlistModel
       .findOne({
-        name: 'Personal',
+        name: 'My Uploading',
         $or: [{ userId: userObjectId }, { ownerId: userObjectId }],
       })
       .exec();
@@ -55,7 +55,7 @@ export class PlaylistsService {
       const created = new this.playlistModel({
         ownerId: userObjectId,
         userId: userObjectId,
-        name: 'Personal',
+        name: 'My Uploading',
         description: 'Your personal music library',
         coverImageUrl: null,
         songIds: [],
