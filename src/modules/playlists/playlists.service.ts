@@ -1,7 +1,9 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -10,10 +12,58 @@ import { UpdatePlaylistInput } from './dto/update-playlist.input';
 import { Playlist, PlaylistDocument } from './schemas/playlist.schema';
 
 @Injectable()
-export class PlaylistsService {
+export class PlaylistsService implements OnModuleInit {
+  private readonly logger = new Logger(PlaylistsService.name);
+
   constructor(
     @InjectModel(Playlist.name) private playlistModel: Model<PlaylistDocument>,
   ) {}
+
+  /**
+   * On startup, clean up any duplicate "My Uploading" playlists that were
+   * created by the old non-atomic find-then-create logic.
+   * For each owner, keeps the oldest playlist (most likely to have real data)
+   * and removes the rest.
+   */
+  async onModuleInit(): Promise<void> {
+    try {
+      const duplicates = await this.playlistModel.aggregate([
+        { $match: { name: 'My Uploading' } },
+        {
+          $group: {
+            _id: '$ownerId',
+            count: { $sum: 1 },
+            ids: { $push: '$_id' },
+            // Keep the oldest one (first created)
+            oldestId: { $first: '$_id' },
+          },
+        },
+        { $match: { count: { $gt: 1 } } },
+      ]);
+
+      for (const dup of duplicates) {
+        // Delete all except the oldest
+        const idsToDelete = dup.ids.filter(
+          (id: Types.ObjectId) => id.toString() !== dup.oldestId.toString(),
+        );
+        const result = await this.playlistModel
+          .deleteMany({ _id: { $in: idsToDelete } })
+          .exec();
+        this.logger.warn(
+          `Cleaned up ${result.deletedCount} duplicate "My Uploading" playlist(s) for owner ${dup._id}`,
+        );
+      }
+
+      if (duplicates.length > 0) {
+        this.logger.log(
+          `Duplicate cleanup complete: fixed ${duplicates.length} user(s)`,
+        );
+      }
+    } catch (error) {
+      this.logger.error('Failed to clean up duplicate playlists', error);
+    }
+  }
+
 
   private validateObjectId(id: string, fieldName = 'ID'): void {
     if (!Types.ObjectId.isValid(id)) {
@@ -43,26 +93,29 @@ export class PlaylistsService {
     this.validateObjectId(userId, 'User ID');
     const userObjectId = new Types.ObjectId(userId);
 
-    // Auto-create "My Uploading" playlist if it doesn't exist yet
-    const personalPlaylist = await this.playlistModel
-      .findOne({
-        name: 'My Uploading',
-        $or: [{ userId: userObjectId }, { ownerId: userObjectId }],
-      })
+    // Atomically ensure "My Uploading" playlist exists for this user.
+    // Using findOneAndUpdate with upsert prevents race conditions where
+    // concurrent calls could both create a new playlist (duplicate).
+    await this.playlistModel
+      .findOneAndUpdate(
+        {
+          name: 'My Uploading',
+          ownerId: userObjectId,
+        },
+        {
+          $setOnInsert: {
+            ownerId: userObjectId,
+            userId: userObjectId,
+            name: 'My Uploading',
+            description: 'Your personal music library',
+            coverImageUrl: null,
+            songIds: [],
+            isPublic: false,
+          },
+        },
+        { upsert: true, new: true },
+      )
       .exec();
-
-    if (!personalPlaylist) {
-      const created = new this.playlistModel({
-        ownerId: userObjectId,
-        userId: userObjectId,
-        name: 'My Uploading',
-        description: 'Your personal music library',
-        coverImageUrl: null,
-        songIds: [],
-        isPublic: false,
-      });
-      await created.save();
-    }
 
     return this.playlistModel
       .find({

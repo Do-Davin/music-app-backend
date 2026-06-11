@@ -49,3 +49,13 @@ export class Playlist {
 
 export type PlaylistDocument = Playlist & Document;
 export const PlaylistSchema = SchemaFactory.createForClass(Playlist);
+
+// Prevent duplicate system playlists ("My Uploading") per user at the DB level.
+// This partial unique index only applies to documents where name === 'My Uploading'.
+PlaylistSchema.index(
+  { ownerId: 1, name: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { name: 'My Uploading' },
+  },
+);
