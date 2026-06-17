@@ -18,8 +18,15 @@ export class SongsResolver {
     return this.songsService.findAll();
   }
 
+  /**
+   * Fetch a single song by ID.
+   * Private songs are completely inaccessible — returns 403 for everyone
+   * (including the owner). The owner must set isPublic to true first.
+   */
   @Query(() => Song, { name: 'song' })
-  async findOne(@Args('id', { type: () => ID }) id: string): Promise<Song> {
+  async findOne(
+    @Args('id', { type: () => ID }) id: string,
+  ): Promise<Song> {
     return this.songsService.findOne(id);
   }
 
