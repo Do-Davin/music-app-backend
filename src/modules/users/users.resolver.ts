@@ -104,7 +104,7 @@ export class UsersResolver {
     @Args('offset', { type: () => Int, nullable: true }) offset?: number,
   ): Promise<Song[]> {
     const ids = await this.usersService.getLikedSongs(userId, limit, offset);
-    return this.songsService.findManyByIds(ids);
+    return this.songsService.findManyByIds(ids, userId);
   }
 
   @Query(() => [RecentlyPlayedSong], { name: 'recentlyPlayed' })
@@ -116,6 +116,7 @@ export class UsersResolver {
     const entries = await this.usersService.getRecentlyPlayed(userId, limit);
     const songs = await this.songsService.findManyByIds(
       entries.map((entry) => entry.songId),
+      userId,
     );
     const songsById = new Map(songs.map((song) => [String(song._id), song]));
 
@@ -211,7 +212,7 @@ export class UsersResolver {
     @CurrentUser('userId') userId: string,
     @Args('songId', { type: () => ID }) songId: string,
   ): Promise<boolean> {
-    await this.songsService.findOne(songId);
+    await this.songsService.findOne(songId, userId);
     await this.playlistsService.addSongToLikedSongsPlaylist(userId, songId);
     return this.usersService.addLikedSong(userId, songId);
   }
@@ -222,7 +223,7 @@ export class UsersResolver {
     @CurrentUser('userId') userId: string,
     @Args('songId', { type: () => ID }) songId: string,
   ): Promise<boolean> {
-    await this.songsService.findOne(songId);
+    await this.songsService.findOne(songId, userId);
     await this.playlistsService.removeSongFromLikedSongsPlaylist(
       userId,
       songId,
@@ -236,7 +237,7 @@ export class UsersResolver {
     @CurrentUser('userId') userId: string,
     @Args('songId', { type: () => ID }) songId: string,
   ): Promise<boolean> {
-    await this.songsService.findOne(songId);
+    await this.songsService.findOne(songId, userId);
 
     const isLiked = await this.usersService.isSongLiked(userId, songId);
     if (isLiked) {
@@ -257,7 +258,7 @@ export class UsersResolver {
     @CurrentUser('userId') userId: string,
     @Args('songId', { type: () => ID }) songId: string,
   ): Promise<boolean> {
-    await this.songsService.findOne(songId);
+    await this.songsService.findOne(songId, userId);
     return this.usersService.addRecentlyPlayed(userId, songId);
   }
 }

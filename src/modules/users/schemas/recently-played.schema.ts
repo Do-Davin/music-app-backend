@@ -31,4 +31,5 @@ export type RecentlyPlayedDocument = RecentlyPlayed & Document;
 export const RecentlyPlayedSchema =
   SchemaFactory.createForClass(RecentlyPlayed);
 
+RecentlyPlayedSchema.index({ userId: 1, songId: 1 }, { unique: true });
 RecentlyPlayedSchema.index({ userId: 1, playedAt: -1 });
