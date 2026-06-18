@@ -10,6 +10,7 @@ import {
 } from '@nestjs/graphql';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { Song } from '../songs/schemas/song.schema';
 import { SongsService } from '../songs/songs.service';
 import { CreatePlaylistInput } from './dto/create-playlist.input';
@@ -24,6 +25,9 @@ export class PlaylistsResolver {
     private readonly songsService: SongsService,
   ) {}
 
+  /**
+   * Returns only public playlists.
+   */
   @Query(() => [Playlist], { name: 'playlists' })
   async findAll(): Promise<Playlist[]> {
     return this.playlistsService.findAll();
@@ -37,9 +41,19 @@ export class PlaylistsResolver {
     return this.playlistsService.findByUser(userId);
   }
 
+  /**
+   * Fetch a single playlist by ID.
+   * Uses OptionalJwtAuthGuard so that:
+   *   - Owners can always see their own playlists (public or private).
+   *   - Other users / unauthenticated callers can only see public playlists.
+   */
   @Query(() => Playlist, { name: 'playlist' })
-  async findOne(@Args('id', { type: () => ID }) id: string): Promise<Playlist> {
-    return this.playlistsService.findOne(id);
+  @UseGuards(OptionalJwtAuthGuard)
+  async findOne(
+    @Args('id', { type: () => ID }) id: string,
+    @CurrentUser('userId') userId?: string,
+  ): Promise<Playlist> {
+    return this.playlistsService.findOne(id, userId);
   }
 
   @Query(() => Playlist, { name: 'likedSongsPlaylist' })
@@ -113,6 +127,11 @@ export class PlaylistsResolver {
     );
   }
 
+  /**
+   * Resolve the `songs` field on a Playlist.
+   * Private songs are always excluded — they become inaccessible
+   * until the owner sets them back to public.
+   */
   @ResolveField(() => [Song], { name: 'songs', nullable: true })
   async songs(@Parent() playlist: Playlist): Promise<Song[]> {
     const resolved = await this.songsService.findManyByIds(
