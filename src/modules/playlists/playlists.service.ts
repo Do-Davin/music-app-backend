@@ -27,8 +27,15 @@ export class PlaylistsService implements OnModuleInit {
    * and removes the rest.
    */
   async onModuleInit(): Promise<void> {
+    type DuplicateGroup = {
+      _id: Types.ObjectId;
+      count: number;
+      ids: Types.ObjectId[];
+      oldestId: Types.ObjectId;
+    };
+
     try {
-      const duplicates = await this.playlistModel.aggregate([
+      const duplicates = await this.playlistModel.aggregate<DuplicateGroup>([
         { $match: { name: 'My Uploading' } },
         {
           $group: {
@@ -51,7 +58,7 @@ export class PlaylistsService implements OnModuleInit {
           .deleteMany({ _id: { $in: idsToDelete } })
           .exec();
         this.logger.warn(
-          `Cleaned up ${result.deletedCount} duplicate "My Uploading" playlist(s) for owner ${dup._id}`,
+          `Cleaned up ${result.deletedCount} duplicate "My Uploading" playlist(s) for owner ${dup._id.toString()}`,
         );
       }
 
@@ -64,7 +71,6 @@ export class PlaylistsService implements OnModuleInit {
       this.logger.error('Failed to clean up duplicate playlists', error);
     }
   }
-
 
   private validateObjectId(id: string, fieldName = 'ID'): void {
     if (!Types.ObjectId.isValid(id)) {
