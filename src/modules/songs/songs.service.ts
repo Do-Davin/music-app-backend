@@ -180,7 +180,8 @@ export class SongsService {
   async search(query: string): Promise<Song[]> {
     if (!query) return [];
 
-    const searchRegex = new RegExp(query, 'i');
+    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const searchRegex = new RegExp(escapedQuery, 'i');
     return this.songModel
       .find({
         $or: [
