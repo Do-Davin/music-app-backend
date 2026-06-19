@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
@@ -26,8 +27,15 @@ export class PlaylistsService implements OnModuleInit {
    * and removes the rest.
    */
   async onModuleInit(): Promise<void> {
+    type DuplicateGroup = {
+      _id: Types.ObjectId;
+      count: number;
+      ids: Types.ObjectId[];
+      oldestId: Types.ObjectId;
+    };
+
     try {
-      const duplicates = await this.playlistModel.aggregate([
+      const duplicates = await this.playlistModel.aggregate<DuplicateGroup>([
         { $match: { name: 'My Uploading' } },
         {
           $group: {
@@ -50,7 +58,7 @@ export class PlaylistsService implements OnModuleInit {
           .deleteMany({ _id: { $in: idsToDelete } })
           .exec();
         this.logger.warn(
-          `Cleaned up ${result.deletedCount} duplicate "My Uploading" playlist(s) for owner ${dup._id}`,
+          `Cleaned up ${result.deletedCount} duplicate "My Uploading" playlist(s) for owner ${dup._id.toString()}`,
         );
       }
 
@@ -63,7 +71,6 @@ export class PlaylistsService implements OnModuleInit {
       this.logger.error('Failed to clean up duplicate playlists', error);
     }
   }
-
 
   private validateObjectId(id: string, fieldName = 'ID'): void {
     if (!Types.ObjectId.isValid(id)) {
@@ -85,8 +92,12 @@ export class PlaylistsService implements OnModuleInit {
     return newPlaylist.save();
   }
 
+  /**
+   * Returns only PUBLIC playlists.
+   * Private playlists are never exposed to the public listing.
+   */
   async findAll(): Promise<Playlist[]> {
-    return this.playlistModel.find().exec();
+    return this.playlistModel.find({ isPublic: true }).exec();
   }
 
   async findByUser(userId: string): Promise<Playlist[]> {
@@ -128,13 +139,29 @@ export class PlaylistsService implements OnModuleInit {
       .exec();
   }
 
-  async findOne(id: string): Promise<PlaylistDocument> {
+  /**
+   * Fetch a single playlist by ID.
+   * - Owners can always view their own playlists.
+   * - Other users can only view public playlists.
+   * - Returns 403 for private playlists accessed by non-owners.
+   */
+  async findOne(id: string, currentUserId?: string): Promise<PlaylistDocument> {
     this.validateObjectId(id, 'Playlist ID');
 
     const playlist = await this.playlistModel.findById(id).exec();
     if (!playlist) {
       throw new NotFoundException(`Playlist with ID "${id}" not found`);
     }
+
+    const isOwner =
+      currentUserId &&
+      (playlist.ownerId?.toString() === currentUserId ||
+        playlist.userId?.toString() === currentUserId);
+
+    if (!playlist.isPublic && !isOwner) {
+      throw new ForbiddenException('This playlist is private');
+    }
+
     return playlist;
   }
 

@@ -863,11 +863,16 @@ export class UsersService {
     this.validateObjectId(songId, 'Song ID');
     await this.ensureUserExists(userId);
 
-    await this.recentlyPlayedModel.create({
-      userId: this.toObjectId(userId, 'User ID'),
-      songId: this.toObjectId(songId, 'Song ID'),
-      playedAt: new Date(),
-    });
+    await this.recentlyPlayedModel
+      .findOneAndUpdate(
+        {
+          userId: this.toObjectId(userId, 'User ID'),
+          songId: this.toObjectId(songId, 'Song ID'),
+        },
+        { $set: { playedAt: new Date() } },
+        { upsert: true },
+      )
+      .exec();
 
     return true;
   }

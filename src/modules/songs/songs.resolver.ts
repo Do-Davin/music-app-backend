@@ -5,6 +5,7 @@ import { CreateSongInput } from './dto/create-song.input';
 import { UpdateSongInput } from './dto/update-song.input';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @Resolver(() => Song)
@@ -18,9 +19,18 @@ export class SongsResolver {
     return this.songsService.findAll();
   }
 
+  /**
+   * Fetch a single song by ID.
+   * Public songs are accessible without authentication.
+   * Private songs are accessible only by their owner (identified via optional JWT).
+   */
   @Query(() => Song, { name: 'song' })
-  async findOne(@Args('id', { type: () => ID }) id: string): Promise<Song> {
-    return this.songsService.findOne(id);
+  @UseGuards(OptionalJwtAuthGuard)
+  async findOne(
+    @CurrentUser('userId') viewerUserId: string | undefined,
+    @Args('id', { type: () => ID }) id: string,
+  ): Promise<Song> {
+    return this.songsService.findOne(id, viewerUserId);
   }
 
   @Query(() => [Song], { name: 'mySongs' })

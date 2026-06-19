@@ -6,6 +6,7 @@ import {
 } from './schemas/reference-material.schema';
 import { ReferencesService } from './references.service';
 import { ReferencesResolver } from './references.resolver';
+import { ReferencesController } from './references.controller';
 import { SongsModule } from '../songs/songs.module';
 
 @Module({
@@ -15,6 +16,7 @@ import { SongsModule } from '../songs/songs.module';
     ]),
     SongsModule,
   ],
+  controllers: [ReferencesController],
   providers: [ReferencesService, ReferencesResolver],
 })
 export class ReferencesModule {}

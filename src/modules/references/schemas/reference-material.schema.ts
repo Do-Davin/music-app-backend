@@ -30,11 +30,7 @@ export class ReferenceMaterial {
   filePath?: string;
 
   @Field(() => String, { nullable: true })
-  get fileUrl(): string | null {
-    if (!this.filePath) return null;
-    // Make sure it returns full URL
-    return `${process.env.BASE_URL || 'http://localhost:3000'}${this.filePath.startsWith('/') ? '' : '/'}${this.filePath}`;
-  }
+  fileUrl?: string;
 
   @Field({ nullable: true })
   @Prop()
@@ -65,3 +61,14 @@ export class ReferenceMaterial {
 
 export const ReferenceMaterialSchema =
   SchemaFactory.createForClass(ReferenceMaterial);
+
+ReferenceMaterialSchema.virtual('fileUrl').get(function () {
+  const doc = this as ReferenceMaterialDocument;
+  if (!doc.filePath) return null;
+  const base = process.env.BASE_URL || 'http://localhost:3000';
+  return `${base}${doc.filePath.startsWith('/') ? '' : '/'}${doc.filePath}`;
+});
+
+// Ensure virtuals are included in JSON/Object conversions
+ReferenceMaterialSchema.set('toJSON', { virtuals: true });
+ReferenceMaterialSchema.set('toObject', { virtuals: true });
