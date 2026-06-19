@@ -169,6 +169,7 @@ export class PlaylistsResolver {
       playlist.songIds ?? [],
       userId,
     );
+    console.log(`[DEBUG songs resolver] playlist: ${playlist.name} (${playlist._id}), userId: ${userId}, songIds: ${playlist.songIds?.join(', ')}, resolved count: ${resolved.length}`);
     return resolved;
   }
 }
