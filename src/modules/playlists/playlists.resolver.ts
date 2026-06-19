@@ -160,9 +160,14 @@ export class PlaylistsResolver {
    * until the owner sets them back to public.
    */
   @ResolveField(() => [Song], { name: 'songs', nullable: true })
-  async songs(@Parent() playlist: Playlist): Promise<Song[]> {
+  @UseGuards(OptionalJwtAuthGuard)
+  async songs(
+    @Parent() playlist: Playlist,
+    @CurrentUser('userId') userId?: string,
+  ): Promise<Song[]> {
     const resolved = await this.songsService.findManyByIds(
       playlist.songIds ?? [],
+      userId,
     );
     return resolved;
   }
