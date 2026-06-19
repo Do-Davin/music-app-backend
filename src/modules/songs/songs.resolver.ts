@@ -30,10 +30,12 @@ export class SongsResolver {
   }
 
   @Query(() => [Song], { name: 'searchSongs' })
+  @UseGuards(JwtAuthGuard)
   async searchSongs(
+    @CurrentUser('userId') userId: string,
     @Args('query', { type: () => String }) query: string,
   ): Promise<Song[]> {
-    return this.songsService.search(query);
+    return this.songsService.search(userId, query);
   }
 
   // ── Mutations ─────────────────────────────────────────────────────────────

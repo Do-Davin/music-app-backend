@@ -33,6 +33,10 @@ export class Playlist {
   @Prop({ type: [Types.ObjectId], ref: 'Song', default: [] })
   songIds!: Types.ObjectId[];
 
+  @Field(() => [ID], { nullable: true })
+  @Prop({ type: [Types.ObjectId], ref: 'User', default: [] })
+  savedUserIds!: Types.ObjectId[];
+
   @Field(() => [Song], { nullable: true })
   songs?: Song[];
 

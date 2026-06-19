@@ -122,7 +122,7 @@ export class PlaylistsService implements OnModuleInit {
         $or: [
           { userId: userObjectId },
           { ownerId: userObjectId },
-          { isPublic: true },
+          { savedUserIds: userObjectId },
         ],
       })
       .exec();
@@ -368,5 +368,86 @@ export class PlaylistsService implements OnModuleInit {
     }
 
     return toPlaylist;
+  }
+
+  async search(userId: string, query: string): Promise<Playlist[]> {
+    if (!query) return [];
+    this.validateObjectId(userId, 'User ID');
+    const userObjectId = new Types.ObjectId(userId);
+    const searchRegex = new RegExp(query, 'i');
+
+    return this.playlistModel
+      .find({
+        $and: [
+          {
+            $or: [
+              { name: searchRegex },
+              { description: searchRegex },
+            ],
+          },
+          {
+            $or: [
+              { userId: userObjectId },
+              { ownerId: userObjectId },
+              { isPublic: true },
+            ],
+          },
+        ],
+      })
+      .exec();
+  }
+
+  async saveToLibrary(userId: string, playlistId: string): Promise<Playlist> {
+    this.validateObjectId(userId, 'User ID');
+    this.validateObjectId(playlistId, 'Playlist ID');
+    const userObjectId = new Types.ObjectId(userId);
+    const playlistObjectId = new Types.ObjectId(playlistId);
+
+    const playlist = await this.playlistModel.findById(playlistObjectId).exec();
+    if (!playlist) {
+      throw new NotFoundException(`Playlist with ID "${playlistId}" not found`);
+    }
+
+    if (!playlist.isPublic && playlist.ownerId?.toString() !== userId) {
+      throw new BadRequestException('Cannot add private playlist to library');
+    }
+
+    const updated = await this.playlistModel
+      .findByIdAndUpdate(
+        playlistObjectId,
+        { $addToSet: { savedUserIds: userObjectId } },
+        { new: true },
+      )
+      .exec();
+
+    if (!updated) {
+      throw new NotFoundException('Failed to update playlist');
+    }
+    return updated;
+  }
+
+  async removeFromLibrary(userId: string, playlistId: string): Promise<Playlist> {
+    this.validateObjectId(userId, 'User ID');
+    this.validateObjectId(playlistId, 'Playlist ID');
+    const userObjectId = new Types.ObjectId(userId);
+    const playlistObjectId = new Types.ObjectId(playlistId);
+
+    const playlist = await this.playlistModel.findById(playlistObjectId).exec();
+    if (!playlist) {
+      throw new NotFoundException(`Playlist with ID "${playlistId}" not found`);
+    }
+
+    const updated = await this.playlistModel
+      .findByIdAndUpdate(
+        playlistObjectId,
+        { $pull: { savedUserIds: userObjectId } },
+        { new: true },
+      )
+      .exec();
+
+    if (!updated) {
+      throw new NotFoundException('Failed to update playlist');
+    }
+    return updated;
   }
 }

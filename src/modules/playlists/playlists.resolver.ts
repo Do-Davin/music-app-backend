@@ -113,6 +113,33 @@ export class PlaylistsResolver {
     );
   }
 
+  @Query(() => [Playlist], { name: 'searchPlaylists' })
+  @UseGuards(JwtAuthGuard)
+  async searchPlaylists(
+    @CurrentUser('userId') userId: string,
+    @Args('query', { type: () => String }) query: string,
+  ): Promise<Playlist[]> {
+    return this.playlistsService.search(userId, query);
+  }
+
+  @Mutation(() => Playlist)
+  @UseGuards(JwtAuthGuard)
+  async savePlaylistToLibrary(
+    @CurrentUser('userId') userId: string,
+    @Args('playlistId', { type: () => ID }) playlistId: string,
+  ): Promise<Playlist> {
+    return this.playlistsService.saveToLibrary(userId, playlistId);
+  }
+
+  @Mutation(() => Playlist)
+  @UseGuards(JwtAuthGuard)
+  async removePlaylistFromLibrary(
+    @CurrentUser('userId') userId: string,
+    @Args('playlistId', { type: () => ID }) playlistId: string,
+  ): Promise<Playlist> {
+    return this.playlistsService.removeFromLibrary(userId, playlistId);
+  }
+
   @ResolveField(() => [Song], { name: 'songs', nullable: true })
   async songs(@Parent() playlist: Playlist): Promise<Song[]> {
     const resolved = await this.songsService.findManyByIds(

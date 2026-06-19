@@ -104,20 +104,30 @@ export class SongsService {
     return true;
   }
 
-  async search(query: string): Promise<Song[]> {
+  async search(userId: string, query: string): Promise<Song[]> {
     if (!query) return [];
 
     const searchRegex = new RegExp(query, 'i');
+    const userObjectId = new Types.ObjectId(userId);
     return this.songModel
       .find({
-        $or: [
-          { title: searchRegex },
-          { artist: searchRegex },
-          { albumName: searchRegex },
-          { lyrics: searchRegex },
-          { tags: searchRegex },
+        $and: [
+          {
+            $or: [
+              { title: searchRegex },
+              { artist: searchRegex },
+              { albumName: searchRegex },
+              { lyrics: searchRegex },
+              { tags: searchRegex },
+            ],
+          },
+          {
+            $or: [
+              { userId: userObjectId },
+              { isPublic: true },
+            ],
+          },
         ],
-        isPublic: true,
       })
       .exec();
   }

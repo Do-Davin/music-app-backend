@@ -46,6 +46,7 @@ type Playlist {
   description: String
   coverImageUrl: String
   songIds: [ID!]
+  savedUserIds: [ID!]
   songs: [Song!]
   isPublic: Boolean
   createdAt: DateTime
@@ -188,6 +189,7 @@ type Query {
   myPlaylists: [Playlist!]!
   playlist(id: ID!): Playlist!
   likedSongsPlaylist: Playlist!
+  searchPlaylists(query: String!): [Playlist!]!
   me: User!
   searchUsers(search: String!): [User!]!
   myFriends(limit: Int, offset: Int): [User!]!
@@ -215,6 +217,8 @@ type Mutation {
   addSongToPlaylist(playlistId: ID!, songId: ID!): Playlist!
   removeSongFromPlaylist(playlistId: ID!, songId: ID!): Playlist!
   moveSongBetweenPlaylists(fromPlaylistId: ID!, toPlaylistId: ID!, songId: ID!): Playlist!
+  savePlaylistToLibrary(playlistId: ID!): Playlist!
+  removePlaylistFromLibrary(playlistId: ID!): Playlist!
   sendFriendRequest(userId: ID!): Boolean!
   acceptFriendRequest(userId: ID!): Boolean!
   rejectFriendRequest(userId: ID!): Boolean!
