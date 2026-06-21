@@ -11,7 +11,6 @@ import {
 } from './schemas/reference-material.schema';
 import { CreateReferenceMaterialInput } from './dto/create-reference-material.input';
 import { UpdateReferenceMaterialInput } from './dto/update-reference-material.input';
-import { FileUploadUtil } from '../common/utils/file-upload.util';
 import { Song, SongDocument } from '../songs/schemas/song.schema';
 
 @Injectable()
@@ -38,6 +37,43 @@ export class ReferencesService {
     }
   }
 
+  /**
+   * Read an uploaded file stream into a Buffer.
+   */
+  private async readFileToBuffer(
+    file: Promise<import('graphql-upload/processRequest.mjs').FileUpload>,
+  ): Promise<{
+    buffer: Buffer;
+    fileName: string;
+    fileSize: number;
+    mimeType: string;
+  }> {
+    const { createReadStream, filename, mimetype } = await file;
+
+    return new Promise((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      const stream = createReadStream();
+
+      stream.on('data', (chunk: Buffer) => {
+        chunks.push(chunk);
+      });
+
+      stream.on('end', () => {
+        const buffer = Buffer.concat(chunks);
+        resolve({
+          buffer,
+          fileName: filename,
+          fileSize: buffer.length,
+          mimeType: mimetype,
+        });
+      });
+
+      stream.on('error', (error) => {
+        reject(error);
+      });
+    });
+  }
+
   async findAll(
     type?: string,
     songId?: string,
@@ -45,10 +81,29 @@ export class ReferencesService {
     const filter: any = {};
     if (type) filter.type = type;
     if (songId) filter.songId = songId;
-    return this.referenceMaterialModel.find(filter).exec();
+    // Exclude fileData from list queries to avoid sending large binary blobs
+    return this.referenceMaterialModel
+      .find(filter)
+      .select('-fileData')
+      .exec();
   }
 
   async findOne(id: string): Promise<ReferenceMaterialDocument> {
+    // Exclude fileData from normal findOne to keep responses lightweight
+    const material = await this.referenceMaterialModel
+      .findById(id)
+      .select('-fileData')
+      .exec();
+    if (!material) {
+      throw new NotFoundException(`Reference material with ID ${id} not found`);
+    }
+    return material;
+  }
+
+  /**
+   * Fetch a reference material WITH its file binary data for downloading.
+   */
+  async findOneWithFileData(id: string): Promise<ReferenceMaterialDocument> {
     const material = await this.referenceMaterialModel.findById(id).exec();
     if (!material) {
       throw new NotFoundException(`Reference material with ID ${id} not found`);
@@ -67,9 +122,9 @@ export class ReferencesService {
     let fileData = {};
 
     if (input.file) {
-      const uploadedFile = await FileUploadUtil.saveFile(input.file);
+      const uploadedFile = await this.readFileToBuffer(input.file);
       fileData = {
-        filePath: uploadedFile.filePath,
+        fileData: uploadedFile.buffer,
         fileName: uploadedFile.fileName,
         fileSize: uploadedFile.fileSize,
         mimeType: uploadedFile.mimeType,
@@ -93,7 +148,10 @@ export class ReferencesService {
     id: string,
     input: UpdateReferenceMaterialInput,
   ): Promise<ReferenceMaterialDocument> {
-    const material = await this.findOne(id);
+    const material = await this.referenceMaterialModel.findById(id).exec();
+    if (!material) {
+      throw new NotFoundException(`Reference material with ID ${id} not found`);
+    }
 
     // Check ownership of the current song associated with this material
     if (material.songId) {
@@ -105,21 +163,14 @@ export class ReferencesService {
       await this.validateSongOwnership(userId, input.songId);
     }
 
-    let fileData = {};
-
     if (input.file) {
-      // Delete old file if exists
-      if (material.filePath) {
-        FileUploadUtil.deleteFile(material.filePath);
-      }
-
-      const uploadedFile = await FileUploadUtil.saveFile(input.file);
-      fileData = {
-        filePath: uploadedFile.filePath,
-        fileName: uploadedFile.fileName,
-        fileSize: uploadedFile.fileSize,
-        mimeType: uploadedFile.mimeType,
-      };
+      const uploadedFile = await this.readFileToBuffer(input.file);
+      material.fileData = uploadedFile.buffer;
+      material.fileName = uploadedFile.fileName;
+      material.fileSize = uploadedFile.fileSize;
+      material.mimeType = uploadedFile.mimeType;
+      // Clear the old local filePath since data is now in the database
+      material.filePath = undefined;
     }
 
     // Surgical update to avoid passing the file promise to the model
@@ -130,25 +181,21 @@ export class ReferencesService {
     if (input.songId !== undefined) material.songId = input.songId;
     if (input.topic !== undefined) material.topic = input.topic;
 
-    if (Object.keys(fileData).length > 0) {
-      Object.assign(material, fileData);
-    }
-
     return material.save();
   }
 
   async delete(userId: string, id: string): Promise<boolean> {
-    const material = await this.findOne(id);
+    const material = await this.referenceMaterialModel.findById(id).exec();
+    if (!material) {
+      throw new NotFoundException(`Reference material with ID ${id} not found`);
+    }
 
     if (material.songId) {
       await this.validateSongOwnership(userId, material.songId);
     }
 
-    // CHANGED: Delete associated file
-    if (material.filePath) {
-      FileUploadUtil.deleteFile(material.filePath);
-    }
-
+    // No local file to delete — data lives in MongoDB and will be removed
+    // with the document.
     await this.referenceMaterialModel.findByIdAndDelete(id).exec();
     return true;
   }

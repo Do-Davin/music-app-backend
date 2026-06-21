@@ -1,6 +1,7 @@
 import { ObjectType, Field, ID } from '@nestjs/graphql';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import * as mongoose from 'mongoose';
 
 export type ReferenceMaterialDocument = ReferenceMaterial & Document;
 
@@ -44,6 +45,10 @@ export class ReferenceMaterial {
   @Prop()
   mimeType?: string;
 
+  // Store the file binary content directly in MongoDB
+  @Prop({ type: mongoose.Schema.Types.Buffer })
+  fileData?: Buffer;
+
   @Field({ nullable: true })
   @Prop()
   songId?: string;
@@ -62,11 +67,13 @@ export class ReferenceMaterial {
 export const ReferenceMaterialSchema =
   SchemaFactory.createForClass(ReferenceMaterial);
 
+// Build fileUrl pointing to the REST download endpoint
 ReferenceMaterialSchema.virtual('fileUrl').get(function () {
   const doc = this as ReferenceMaterialDocument;
-  if (!doc.filePath) return null;
+  // Only generate a download URL if we have file data stored in the database
+  if (!doc.fileData && !doc.filePath) return null;
   const base = process.env.BASE_URL || 'http://localhost:3000';
-  return `${base}${doc.filePath.startsWith('/') ? '' : '/'}${doc.filePath}`;
+  return `${base}/references/${doc._id}/download`;
 });
 
 // Ensure virtuals are included in JSON/Object conversions
