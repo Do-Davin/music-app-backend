@@ -21,6 +21,27 @@ export class KaraokeResolver {
     return this.karaokeService.findByUser(userId);
   }
 
+  @Query(() => [KaraokeSong], { name: 'publicKaraokeSongs' })
+  async findPublic(): Promise<KaraokeSong[]> {
+    return this.karaokeService.findPublic();
+  }
+
+  @Query(() => [KaraokeSong], { name: 'searchOwnKaraokeSongs' })
+  @UseGuards(JwtAuthGuard)
+  async searchOwn(
+    @CurrentUser('userId') userId: string,
+    @Args('query', { type: () => String }) query: string,
+  ): Promise<KaraokeSong[]> {
+    return this.karaokeService.searchOwn(userId, query);
+  }
+
+  @Query(() => [KaraokeSong], { name: 'searchPublicKaraokeSongs' })
+  async searchPublic(
+    @Args('query', { type: () => String }) query: string,
+  ): Promise<KaraokeSong[]> {
+    return this.karaokeService.searchPublic(query);
+  }
+
   @Mutation(() => KaraokeSong)
   @UseGuards(JwtAuthGuard)
   async createKaraokeSong(
@@ -28,6 +49,16 @@ export class KaraokeResolver {
     @Args('input') input: CreateKaraokeSongInput,
   ): Promise<KaraokeSong> {
     return this.karaokeService.create(userId, input);
+  }
+
+  @Mutation(() => KaraokeSong)
+  @UseGuards(JwtAuthGuard)
+  async updateKaraokeSongVisibility(
+    @CurrentUser('userId') userId: string,
+    @Args('id', { type: () => ID }) id: string,
+    @Args('isPublic', { type: () => Boolean }) isPublic: boolean,
+  ): Promise<KaraokeSong> {
+    return this.karaokeService.updateVisibility(userId, id, isPublic);
   }
 
   @Mutation(() => Boolean)

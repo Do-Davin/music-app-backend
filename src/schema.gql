@@ -170,6 +170,7 @@ type KaraokeSong {
   sourcePath: String!
   lyrics: [KaraokeLyricLine!]!
   duration: Float
+  isPublic: Boolean
   createdAt: DateTime
   updatedAt: DateTime
 }
@@ -205,6 +206,9 @@ type Query {
   referenceMaterial(id: ID!): ReferenceMaterial!
   karaokeHealth: String!
   karaokeSongs: [KaraokeSong!]!
+  publicKaraokeSongs: [KaraokeSong!]!
+  searchOwnKaraokeSongs(query: String!): [KaraokeSong!]!
+  searchPublicKaraokeSongs(query: String!): [KaraokeSong!]!
 }
 
 type Mutation {
@@ -241,6 +245,7 @@ type Mutation {
   updateReferenceMaterial(id: ID!, input: UpdateReferenceMaterialInput!): ReferenceMaterial!
   deleteReferenceMaterial(id: ID!): Boolean!
   createKaraokeSong(input: CreateKaraokeSongInput!): KaraokeSong!
+  updateKaraokeSongVisibility(id: ID!, isPublic: Boolean!): KaraokeSong!
   removeKaraokeSong(id: ID!): Boolean!
 }
 
@@ -358,6 +363,7 @@ input CreateKaraokeSongInput {
   sourcePath: String!
   lyrics: [KaraokeLyricLineInput!]
   duration: Float
+  isPublic: Boolean = false
 }
 
 input KaraokeLyricLineInput {

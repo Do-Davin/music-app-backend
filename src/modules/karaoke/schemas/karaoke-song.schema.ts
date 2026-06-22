@@ -89,6 +89,10 @@ export class KaraokeSong {
   @Prop()
   duration: number;
 
+  @Field({ nullable: true, defaultValue: false })
+  @Prop({ default: false })
+  isPublic: boolean;
+
   @Field({ nullable: true })
   createdAt: Date;
 

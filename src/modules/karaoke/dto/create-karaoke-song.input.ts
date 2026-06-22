@@ -41,4 +41,7 @@ export class CreateKaraokeSongInput {
 
   @Field(() => Float, { nullable: true })
   duration: number;
+
+  @Field({ nullable: true, defaultValue: false })
+  isPublic?: boolean;
 }
