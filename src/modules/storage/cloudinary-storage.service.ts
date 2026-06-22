@@ -59,6 +59,12 @@ export class CloudinaryStorageService {
     };
   }
 
+  buildThumbnailUrl(publicId: string, size = 150): string | undefined {
+    const cloudName = this.configService.get<string>('CLOUDINARY_CLOUD_NAME');
+    if (!cloudName || !publicId?.trim()) return undefined;
+    return `https://res.cloudinary.com/${cloudName}/image/upload/w_${size},h_${size},c_fill,f_auto,q_auto/${publicId}`;
+  }
+
   async deleteFile(key: string): Promise<void> {
     if (!key?.trim()) {
       return;

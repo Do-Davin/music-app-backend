@@ -94,6 +94,9 @@ export class User {
   @Prop()
   profileImageContentType?: string;
 
+  @Field({ nullable: true })
+  profileImageThumbnailUrl?: string;
+
   @Field(() => Int, { nullable: true })
   @Prop()
   profileImageSize?: number;

@@ -84,6 +84,7 @@ type User {
   profileImageKey: String
   profileImageUpdatedAt: DateTime
   profileImageContentType: String
+  profileImageThumbnailUrl: String
   profileImageSize: Int
   profileType: ProfileType!
   practiceGoals: PracticeGoals
