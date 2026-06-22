@@ -1,10 +1,20 @@
 import { UseGuards } from '@nestjs/common';
-import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
+import {
+  Args,
+  ID,
+  Int,
+  Mutation,
+  Parent,
+  Query,
+  ResolveField,
+  Resolver,
+} from '@nestjs/graphql';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PlaylistsService } from '../playlists/playlists.service';
 import { Song } from '../songs/schemas/song.schema';
 import { SongsService } from '../songs/songs.service';
+import { CloudinaryStorageService } from '../storage/cloudinary-storage.service';
 import { FollowCounts } from './schemas/follow.schema';
 import { RecentlyPlayedSong } from './schemas/recently-played.schema';
 import { RelationshipStatus } from './schemas/relationship-status.schema';
@@ -17,7 +27,14 @@ export class UsersResolver {
     private readonly usersService: UsersService,
     private readonly songsService: SongsService,
     private readonly playlistsService: PlaylistsService,
+    private readonly cloudinaryStorageService: CloudinaryStorageService,
   ) {}
+
+  @ResolveField(() => String, { nullable: true })
+  profileImageThumbnailUrl(@Parent() user: User): string | undefined {
+    if (!user.profileImageKey) return undefined;
+    return this.cloudinaryStorageService.buildThumbnailUrl(user.profileImageKey);
+  }
 
   @Query(() => User, { name: 'me' })
   @UseGuards(JwtAuthGuard)

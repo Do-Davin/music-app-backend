@@ -33,6 +33,7 @@ type ProfileImageResponse = {
   profileType: ProfileType;
   profileImageUrl?: string;
   profileImageKey?: string;
+  profileImageThumbnailUrl?: string;
   profileImageUpdatedAt?: Date;
   profileImageContentType?: string;
   profileImageSize?: number;
@@ -133,6 +134,9 @@ export class UsersController {
       profileType: user.profileType,
       profileImageUrl: user.profileImageUrl,
       profileImageKey: user.profileImageKey,
+      profileImageThumbnailUrl: user.profileImageKey
+        ? this.cloudinaryStorageService.buildThumbnailUrl(user.profileImageKey)
+        : undefined,
       profileImageUpdatedAt: user.profileImageUpdatedAt,
       profileImageContentType: user.profileImageContentType,
       profileImageSize: user.profileImageSize,
