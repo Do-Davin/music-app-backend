@@ -14,7 +14,7 @@ export type UploadBufferParams = {
 };
 
 export type UploadBufferResult = {
-  url: string;
+  url: string; 
   key: string;
 };
 
