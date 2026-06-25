@@ -55,6 +55,7 @@ type Playlist {
   savedUserIds: [ID!]
   songs: [Song!]
   isPublic: Boolean
+  isKaraoke: Boolean
   createdAt: DateTime
   updatedAt: DateTime
 }
@@ -294,6 +295,7 @@ input CreatePlaylistInput {
   description: String
   coverImageUrl: String
   isPublic: Boolean = false
+  isKaraoke: Boolean = false
   songIds: [ID!]
 }
 
@@ -302,6 +304,7 @@ input UpdatePlaylistInput {
   description: String
   coverImageUrl: String
   isPublic: Boolean = false
+  isKaraoke: Boolean = false
   songIds: [ID!]
   id: ID!
 }
