@@ -84,7 +84,7 @@ export class SongsService {
       const isOwner = viewerUserId && song.userId?.toString() === viewerUserId;
       if (!isOwner) {
         throw new ForbiddenException(
-          `This song is private and can only be accessed by its owner.`,
+          `This song is currently private. You cannot view it unless the owner makes it public.`,
         );
       }
     }
@@ -109,7 +109,7 @@ export class SongsService {
       // Non-owners cannot modify private songs at all
       if (!song.isPublic) {
         throw new ForbiddenException(
-          `This song is private and cannot be modified.`,
+          `This song is currently private. You cannot modify it unless the owner makes it public.`,
         );
       }
 
