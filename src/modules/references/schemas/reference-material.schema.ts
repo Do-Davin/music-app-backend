@@ -69,8 +69,16 @@ ReferenceMaterialSchema.virtual('fileUrl').get(function () {
   const doc = this as ReferenceMaterialDocument;
   if (!doc.filePath) return null;
   const base = process.env.BASE_URL || 'http://localhost:3000';
-  // filePath is relative to the uploads dir, e.g. "references/1719130000000-report.pdf"
-  return `${base}/uploads/${doc.filePath}`;
+  
+  // Clean up filePath if it already contains the uploads prefix to avoid double-prefixing
+  let cleanPath = doc.filePath;
+  if (cleanPath.startsWith('/uploads/')) {
+    cleanPath = cleanPath.substring('/uploads/'.length);
+  } else if (cleanPath.startsWith('uploads/')) {
+    cleanPath = cleanPath.substring('uploads/'.length);
+  }
+  
+  return `${base}/uploads/${cleanPath}`;
 });
 
 // Ensure virtuals are included in JSON/Object conversions
