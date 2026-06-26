@@ -1,7 +1,6 @@
 import { ObjectType, Field, ID } from '@nestjs/graphql';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import * as mongoose from 'mongoose';
 
 export type ReferenceMaterialDocument = ReferenceMaterial & Document;
 
@@ -26,10 +25,12 @@ export class ReferenceMaterial {
   @Prop()
   description?: string;
 
+  // Relative path inside the uploads directory, e.g. "references/1719130000000-report.pdf"
   @Field({ nullable: true })
   @Prop()
   filePath?: string;
 
+  // Virtual field — full download URL built from filePath
   @Field(() => String, { nullable: true })
   fileUrl?: string;
 
@@ -44,10 +45,6 @@ export class ReferenceMaterial {
   @Field({ nullable: true })
   @Prop()
   mimeType?: string;
-
-  // Store the file binary content directly in MongoDB
-  @Prop({ type: mongoose.Schema.Types.Buffer })
-  fileData?: Buffer;
 
   @Field({ nullable: true })
   @Prop()
@@ -67,15 +64,24 @@ export class ReferenceMaterial {
 export const ReferenceMaterialSchema =
   SchemaFactory.createForClass(ReferenceMaterial);
 
-// Build fileUrl pointing to the REST download endpoint
+// Build fileUrl from the static uploads path
 ReferenceMaterialSchema.virtual('fileUrl').get(function () {
   const doc = this as ReferenceMaterialDocument;
-  // Only generate a download URL if we have file data stored in the database
-  if (!doc.fileData && !doc.filePath) return null;
+  if (!doc.filePath) return null;
   const base = process.env.BASE_URL || 'http://localhost:3000';
-  return `${base}/references/${doc._id}/download`;
+  
+  // Clean up filePath if it already contains the uploads prefix to avoid double-prefixing
+  let cleanPath = doc.filePath;
+  if (cleanPath.startsWith('/uploads/')) {
+    cleanPath = cleanPath.substring('/uploads/'.length);
+  } else if (cleanPath.startsWith('uploads/')) {
+    cleanPath = cleanPath.substring('uploads/'.length);
+  }
+  
+  return `${base}/uploads/${cleanPath}`;
 });
 
 // Ensure virtuals are included in JSON/Object conversions
 ReferenceMaterialSchema.set('toJSON', { virtuals: true });
 ReferenceMaterialSchema.set('toObject', { virtuals: true });
+
