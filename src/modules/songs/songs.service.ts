@@ -213,10 +213,7 @@ export class SongsService {
             ],
           },
           {
-            $or: [
-              { userId: userObjectId },
-              { isPublic: true },
-            ],
+            $or: [{ userId: userObjectId }, { isPublic: true }],
           },
         ],
       })
@@ -272,5 +269,83 @@ export class SongsService {
     }
 
     return orderedSongs;
+  }
+
+  /**
+   * Return songs to display on a public profile page.
+   *
+   * Access rules (centralized here):
+   *   canView = false → empty array (section is locked for this viewer)
+   *   isSelf = true   → all songs owned by the user (public + private)
+   *   otherwise       → only isPublic:true songs owned by the user
+   *
+   * `isPublic` per song is always respected for non-owners: profile-level
+   * songVisibility controls section access; song-level isPublic controls
+   * individual song visibility. A friend with FRIENDS_ONLY access still
+   * cannot see songs the owner marked private (isPublic:false).
+   */
+  /**
+   * Return liked songs to display on a public profile page.
+   *
+   * Access rules (centralized here):
+   *   canView = false → empty array (section is locked for this viewer)
+   *   isSelf = true   → all songs the owner liked, including their own private ones
+   *                     (reuses findManyByIds with ownerId so owner-private songs surface)
+   *   otherwise       → only isPublic:true songs from the liked IDs
+   *                     (reuses findManyByIds with no viewerUserId, ensuring no
+   *                      viewer-private-song bias leaks from a third party's liked list)
+   *
+   * UserLikedSong join records are never returned — only resolved Song objects.
+   */
+  async findVisibleLikedSongsForPublicProfile(
+    targetUserId: string,
+    canView: boolean,
+    isSelf: boolean,
+  ): Promise<Song[]> {
+    if (!canView) return [];
+
+    const targetObjectId = new Types.ObjectId(targetUserId);
+
+    const likedEntries = await this.userLikedSongModel
+      .find({ userId: targetObjectId })
+      .sort({ createdAt: -1 })
+      .lean()
+      .exec();
+
+    if (!likedEntries.length) return [];
+
+    const likedIds = likedEntries.map((e) => e.songId);
+
+    if (isSelf) {
+      // Owner sees their own private liked songs in addition to public ones.
+      return this.findManyByIds(likedIds, targetUserId);
+    }
+
+    // Non-owner: pass no viewerUserId so only isPublic:true songs are returned.
+    // This prevents the viewer's own private songs from appearing in a third
+    // party's liked list even if the target happened to like them.
+    return this.findManyByIds(likedIds, undefined);
+  }
+
+  async findVisibleSongsForPublicProfile(
+    ownerId: string,
+    canView: boolean,
+    isSelf: boolean,
+  ): Promise<Song[]> {
+    if (!canView) return [];
+
+    const ownerObjectId = new Types.ObjectId(ownerId);
+
+    if (isSelf) {
+      return this.songModel
+        .find({ userId: ownerObjectId })
+        .sort({ createdAt: -1 })
+        .exec();
+    }
+
+    return this.songModel
+      .find({ userId: ownerObjectId, isPublic: true })
+      .sort({ createdAt: -1 })
+      .exec();
   }
 }

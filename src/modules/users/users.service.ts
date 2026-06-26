@@ -21,11 +21,20 @@ import {
   UserLikedSong,
   UserLikedSongDocument,
 } from './schemas/user-liked-song.schema';
-import { ProfileType, User, UserDocument } from './schemas/user.schema';
+import { ProfileType, User, UserDocument, VisibilityType } from './schemas/user.schema';
+import { UpdatePrivacySettingsInput } from './dto/update-privacy-settings.input';
+import {
+  LockedReason,
+  ProfileSectionAccess,
+  PublicUserProfile,
+} from './schemas/public-user-profile.schema';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const bcrypt = require('bcryptjs') as typeof import('bcryptjs');
 
 export type UserWithoutPassword = Omit<User, 'password'>;
+export type PublicUserProfileData = Omit<PublicUserProfile, 'profileImageThumbnailUrl' | 'visibleSongs' | 'visiblePlaylists' | 'visibleLikedSongs'> & {
+  profileImageKey?: string;
+};
 export type RecentlyPlayedEntry = {
   songId: Types.ObjectId;
   playedAt: Date;
@@ -1027,6 +1036,125 @@ export class UsersService {
         },
         { new: true },
       )
+      .exec();
+
+    if (!updatedUser) {
+      throw new NotFoundException(`User with ID "${userId}" not found`);
+    }
+
+    return this.stripPassword(updatedUser);
+  }
+
+  private computeSectionAccess(
+    key: string,
+    visibility: VisibilityType,
+    isSelf: boolean,
+    isFriend: boolean,
+    viewerUserId?: string,
+  ): ProfileSectionAccess {
+    if (isSelf) {
+      return { key, visibility, canView: true, lockedReason: null };
+    }
+    switch (visibility) {
+      case VisibilityType.PUBLIC:
+        return { key, visibility, canView: true, lockedReason: null };
+      case VisibilityType.FRIENDS_ONLY:
+        if (!viewerUserId) {
+          return { key, visibility, canView: false, lockedReason: LockedReason.LOGIN_REQUIRED };
+        }
+        if (isFriend) {
+          return { key, visibility, canView: true, lockedReason: null };
+        }
+        return { key, visibility, canView: false, lockedReason: LockedReason.FRIENDS_ONLY };
+      case VisibilityType.PRIVATE:
+        return { key, visibility, canView: false, lockedReason: LockedReason.PRIVATE };
+    }
+  }
+
+  async getPublicUserProfile(
+    targetUserId: string,
+    viewerUserId?: string,
+  ): Promise<PublicUserProfileData> {
+    this.validateObjectId(targetUserId, 'User ID');
+
+    const targetUser = await this.userModel.findById(targetUserId).exec();
+    if (!targetUser) {
+      throw new NotFoundException(`User with ID "${targetUserId}" not found`);
+    }
+
+    const normalizedTargetId = String(targetUser._id);
+    const isSelf = viewerUserId !== undefined && viewerUserId === normalizedTargetId;
+
+    let isFriend = false;
+    let isFollowing = false;
+
+    if (!isSelf && viewerUserId) {
+      const pairKey = this.pairKey(viewerUserId, normalizedTargetId);
+      const friendship = await this.friendshipModel
+        .findOne({ pairKey })
+        .lean()
+        .exec();
+      isFriend = friendship?.status === FriendshipStatus.ACCEPTED;
+
+      const fPairKey = this.followPairKey(viewerUserId, normalizedTargetId);
+      const follow = await this.followModel.exists({ pairKey: fPairKey }).exec();
+      isFollowing = Boolean(follow);
+    }
+
+    // Fall back to schema defaults for documents that pre-date Milestone 1.
+    const songVis = targetUser.songVisibility ?? VisibilityType.PUBLIC;
+    const playlistVis = targetUser.playlistVisibility ?? VisibilityType.PUBLIC;
+    const likedSongVis = targetUser.likedSongVisibility ?? VisibilityType.PRIVATE;
+
+    return {
+      _id: targetUser._id,
+      username: targetUser.username,
+      profileType: targetUser.profileType,
+      profileImageUrl: targetUser.profileImageUrl,
+      profileImageKey: targetUser.profileImageKey,
+      isSelf,
+      isFriend,
+      isFollowing,
+      songs: this.computeSectionAccess('songs', songVis, isSelf, isFriend, viewerUserId),
+      playlists: this.computeSectionAccess('playlists', playlistVis, isSelf, isFriend, viewerUserId),
+      likedSongs: this.computeSectionAccess('likedSongs', likedSongVis, isSelf, isFriend, viewerUserId),
+    };
+  }
+
+  async updatePrivacySettings(
+    userId: string,
+    input: UpdatePrivacySettingsInput,
+  ): Promise<UserWithoutPassword> {
+    this.validateObjectId(userId, 'User ID');
+
+    const allowed = Object.values(VisibilityType) as string[];
+    for (const [key, value] of Object.entries(input)) {
+      if (value !== undefined && !allowed.includes(value)) {
+        throw new BadRequestException(`Invalid visibility value for ${key}`);
+      }
+    }
+
+    const updateFields: Partial<Record<string, VisibilityType>> = {};
+    if (input.songVisibility !== undefined) {
+      updateFields.songVisibility = input.songVisibility;
+    }
+    if (input.playlistVisibility !== undefined) {
+      updateFields.playlistVisibility = input.playlistVisibility;
+    }
+    if (input.likedSongVisibility !== undefined) {
+      updateFields.likedSongVisibility = input.likedSongVisibility;
+    }
+
+    if (Object.keys(updateFields).length === 0) {
+      const user = await this.userModel.findById(userId).exec();
+      if (!user) {
+        throw new NotFoundException(`User with ID "${userId}" not found`);
+      }
+      return this.stripPassword(user);
+    }
+
+    const updatedUser = await this.userModel
+      .findByIdAndUpdate(userId, { $set: updateFields }, { new: true })
       .exec();
 
     if (!updatedUser) {
