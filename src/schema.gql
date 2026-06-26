@@ -87,6 +87,9 @@ type User {
   profileImageThumbnailUrl: String
   profileImageSize: Int
   profileType: ProfileType!
+  songVisibility: VisibilityType!
+  playlistVisibility: VisibilityType!
+  likedSongVisibility: VisibilityType!
   practiceGoals: PracticeGoals
   practiceStreak: PracticeStreak
   preferences: Preferences
@@ -99,9 +102,56 @@ enum ProfileType {
   PROFESSIONAL
 }
 
+enum VisibilityType {
+  PUBLIC
+  FRIENDS_ONLY
+  PRIVATE
+}
+
 type FollowCounts {
   followers: Int!
   following: Int!
+}
+
+type PublicPlaylist {
+  _id: ID!
+  name: String!
+  description: String
+  coverImageUrl: String
+  isPublic: Boolean!
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+type ProfileSectionAccess {
+  key: String!
+  visibility: VisibilityType!
+  canView: Boolean!
+  lockedReason: LockedReason
+}
+
+"""Why a profile section is not accessible to the viewer"""
+enum LockedReason {
+  PRIVATE
+  FRIENDS_ONLY
+  LOGIN_REQUIRED
+}
+
+type PublicUserProfile {
+  _id: ID!
+  username: String
+  profileType: ProfileType!
+  profileImageUrl: String
+  profileImageThumbnailUrl: String
+  isSelf: Boolean!
+  isFriend: Boolean!
+  isFollowing: Boolean!
+  songs: ProfileSectionAccess!
+  playlists: ProfileSectionAccess!
+  likedSongs: ProfileSectionAccess!
+  visibleSongs: [Song!]!
+  visiblePlaylists: [PublicPlaylist!]!
+  visibleLikedSongs: [Song!]!
 }
 
 type RelationshipStatus {
@@ -192,6 +242,7 @@ type Query {
   likedSongsPlaylist: Playlist!
   searchPlaylists(query: String!): [Playlist!]!
   me: User!
+  publicUserProfile(userId: ID!): PublicUserProfile!
   searchUsers(search: String!): [User!]!
   myFriends(limit: Int, offset: Int): [User!]!
   incomingFriendRequests(limit: Int, offset: Int): [User!]!
@@ -228,6 +279,7 @@ type Mutation {
   unfollowUser(userId: ID!): Boolean!
   updateUsername(newUsername: String!): User!
   switchToProfessionalAccount: User!
+  updatePrivacySettings(input: UpdatePrivacySettingsInput!): User!
   likeSong(songId: ID!): Boolean!
   unlikeSong(songId: ID!): Boolean!
   toggleLikeSong(songId: ID!): Boolean!
@@ -299,6 +351,12 @@ input UpdatePlaylistInput {
   isPublic: Boolean = false
   songIds: [ID!]
   id: ID!
+}
+
+input UpdatePrivacySettingsInput {
+  songVisibility: VisibilityType
+  playlistVisibility: VisibilityType
+  likedSongVisibility: VisibilityType
 }
 
 input RegisterInput {

@@ -11,6 +11,16 @@ registerEnumType(ProfileType, {
   name: 'ProfileType',
 });
 
+export enum VisibilityType {
+  PUBLIC = 'PUBLIC',
+  FRIENDS_ONLY = 'FRIENDS_ONLY',
+  PRIVATE = 'PRIVATE',
+}
+
+registerEnumType(VisibilityType, {
+  name: 'VisibilityType',
+});
+
 @ObjectType()
 @Schema({ _id: false })
 export class PracticeStreak {
@@ -108,6 +118,30 @@ export class User {
     default: ProfileType.PERSONAL,
   })
   profileType: ProfileType;
+
+  @Field(() => VisibilityType)
+  @Prop({
+    enum: VisibilityType,
+    required: true,
+    default: VisibilityType.PUBLIC,
+  })
+  songVisibility: VisibilityType;
+
+  @Field(() => VisibilityType)
+  @Prop({
+    enum: VisibilityType,
+    required: true,
+    default: VisibilityType.PUBLIC,
+  })
+  playlistVisibility: VisibilityType;
+
+  @Field(() => VisibilityType)
+  @Prop({
+    enum: VisibilityType,
+    required: true,
+    default: VisibilityType.PRIVATE,
+  })
+  likedSongVisibility: VisibilityType;
 
   @Field(() => PracticeGoals, { nullable: true })
   @Prop({ type: PracticeGoals, default: () => ({}) })

@@ -11,10 +11,16 @@ import {
 } from '@nestjs/graphql';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { PlaylistsService } from '../playlists/playlists.service';
 import { Song } from '../songs/schemas/song.schema';
 import { SongsService } from '../songs/songs.service';
 import { CloudinaryStorageService } from '../storage/cloudinary-storage.service';
+import { UpdatePrivacySettingsInput } from './dto/update-privacy-settings.input';
+import {
+  PublicPlaylist,
+  PublicUserProfile,
+} from './schemas/public-user-profile.schema';
 import { FollowCounts } from './schemas/follow.schema';
 import { RecentlyPlayedSong } from './schemas/recently-played.schema';
 import { RelationshipStatus } from './schemas/relationship-status.schema';
@@ -33,13 +39,57 @@ export class UsersResolver {
   @ResolveField(() => String, { nullable: true })
   profileImageThumbnailUrl(@Parent() user: User): string | undefined {
     if (!user.profileImageKey) return undefined;
-    return this.cloudinaryStorageService.buildThumbnailUrl(user.profileImageKey);
+    return this.cloudinaryStorageService.buildThumbnailUrl(
+      user.profileImageKey,
+    );
   }
 
   @Query(() => User, { name: 'me' })
   @UseGuards(JwtAuthGuard)
   async getMe(@CurrentUser('userId') userId: string): Promise<User | null> {
     return this.usersService.findById(userId);
+  }
+
+  @Query(() => PublicUserProfile, { name: 'publicUserProfile' })
+  @UseGuards(OptionalJwtAuthGuard)
+  async publicUserProfile(
+    @Args('userId', { type: () => ID }) userId: string,
+    @CurrentUser('userId') viewerUserId?: string,
+  ): Promise<PublicUserProfile> {
+    const data = await this.usersService.getPublicUserProfile(
+      userId,
+      viewerUserId,
+    );
+    const { profileImageKey, ...rest } = data;
+
+    const [visibleSongs, visiblePlaylists, visibleLikedSongs] =
+      await Promise.all([
+        this.songsService.findVisibleSongsForPublicProfile(
+          userId,
+          data.songs.canView,
+          data.isSelf,
+        ),
+        this.playlistsService.findVisiblePlaylistsForPublicProfile(
+          userId,
+          data.playlists.canView,
+          data.isSelf,
+        ),
+        this.songsService.findVisibleLikedSongsForPublicProfile(
+          userId,
+          data.likedSongs.canView,
+          data.isSelf,
+        ),
+      ]);
+
+    return {
+      ...rest,
+      profileImageThumbnailUrl: profileImageKey
+        ? this.cloudinaryStorageService.buildThumbnailUrl(profileImageKey)
+        : undefined,
+      visibleSongs,
+      visiblePlaylists: visiblePlaylists as unknown as PublicPlaylist[],
+      visibleLikedSongs,
+    };
   }
 
   @Query(() => [User], { name: 'searchUsers' })
@@ -221,6 +271,15 @@ export class UsersResolver {
     @CurrentUser('userId') userId: string,
   ): Promise<UserWithoutPassword> {
     return this.usersService.switchToProfessionalAccount(userId);
+  }
+
+  @Mutation(() => User, { name: 'updatePrivacySettings' })
+  @UseGuards(JwtAuthGuard)
+  async updatePrivacySettings(
+    @CurrentUser('userId') userId: string,
+    @Args('input') input: UpdatePrivacySettingsInput,
+  ): Promise<UserWithoutPassword> {
+    return this.usersService.updatePrivacySettings(userId, input);
   }
 
   @Mutation(() => Boolean, { name: 'likeSong' })

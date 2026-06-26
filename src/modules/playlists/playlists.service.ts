@@ -407,10 +407,7 @@ export class PlaylistsService implements OnModuleInit {
       .find({
         $and: [
           {
-            $or: [
-              { name: searchRegex },
-              { description: searchRegex },
-            ],
+            $or: [{ name: searchRegex }, { description: searchRegex }],
           },
           {
             $or: [
@@ -453,7 +450,52 @@ export class PlaylistsService implements OnModuleInit {
     return updated;
   }
 
-  async removeFromLibrary(userId: string, playlistId: string): Promise<Playlist> {
+  /**
+   * Names of internal system playlists that must never appear on a public profile.
+   */
+  private static readonly SYSTEM_PLAYLIST_NAMES = [
+    'Liked Songs',
+    'My Uploading',
+  ];
+
+  /**
+   * Return playlists to display on a public profile page.
+   *
+   * Access rules (centralized here):
+   *   canView = false → empty array (section is locked for this viewer)
+   *   isSelf = true   → all owned playlists except system ones
+   *   otherwise       → only isPublic:true owned playlists except system ones
+   *
+   * "Owned" means ownerId or userId equals the target — this covers both the
+   * current field and the legacy field without returning saved-by-user playlists.
+   * playlistVisibility controls section access; playlist-level isPublic controls
+   * individual visibility for non-owners. Friends with FRIENDS_ONLY access still
+   * cannot see playlists the owner marked private (isPublic:false).
+   */
+  async findVisiblePlaylistsForPublicProfile(
+    ownerId: string,
+    canView: boolean,
+    isSelf: boolean,
+  ): Promise<Playlist[]> {
+    if (!canView) return [];
+
+    const ownerObjectId = new Types.ObjectId(ownerId);
+    const isPublicFilter = isSelf ? {} : { isPublic: true };
+
+    return this.playlistModel
+      .find({
+        $or: [{ ownerId: ownerObjectId }, { userId: ownerObjectId }],
+        name: { $nin: PlaylistsService.SYSTEM_PLAYLIST_NAMES },
+        ...isPublicFilter,
+      })
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
+  async removeFromLibrary(
+    userId: string,
+    playlistId: string,
+  ): Promise<Playlist> {
     this.validateObjectId(userId, 'User ID');
     this.validateObjectId(playlistId, 'Playlist ID');
     const userObjectId = new Types.ObjectId(userId);
