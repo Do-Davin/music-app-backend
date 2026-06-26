@@ -168,6 +168,7 @@ export class PlaylistsResolver {
     const resolved = await this.songsService.findManyByIds(
       playlist.songIds ?? [],
       userId,
+      true,
     );
     console.log(`[DEBUG songs resolver] playlist: ${playlist.name} (${playlist._id}), userId: ${userId}, songIds: ${playlist.songIds?.join(', ')}, resolved count: ${resolved.length}`);
     return resolved;

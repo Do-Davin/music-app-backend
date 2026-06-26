@@ -37,6 +37,23 @@ export class SongsService {
     userId: string,
     createSongInput: CreateSongInput,
   ): Promise<Song> {
+    // Check for duplicate YouTube URL for this user
+    if (createSongInput.source === 'youtube' && createSongInput.sourcePath) {
+      const userExistingYt = await this.songModel
+        .findOne({
+          userId: new Types.ObjectId(userId),
+          source: 'youtube',
+          sourcePath: createSongInput.sourcePath,
+        })
+        .exec();
+
+      if (userExistingYt) {
+        throw new BadRequestException(
+          'You have already uploaded this YouTube video to your library.',
+        );
+      }
+    }
+
     // Check for duplicate song title for this user
     const existing = await this.songModel
       .findOne({
@@ -216,12 +233,18 @@ export class SongsService {
   async findManyByIds(
     ids: Array<string | Types.ObjectId>,
     viewerUserId?: string,
+    ignorePrivacy = false,
   ): Promise<Song[]> {
     if (!ids.length) {
       return [];
     }
 
-    const songs = viewerUserId
+    const songs = ignorePrivacy
+      ? await this.songModel
+          .find({ _id: { $in: ids } })
+          .lean()
+          .exec()
+      : viewerUserId
       ? await this.songModel
           .find({
             _id: { $in: ids },

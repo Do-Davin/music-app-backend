@@ -121,7 +121,7 @@ export class UsersResolver {
     @Args('offset', { type: () => Int, nullable: true }) offset?: number,
   ): Promise<Song[]> {
     const ids = await this.usersService.getLikedSongs(userId, limit, offset);
-    return this.songsService.findManyByIds(ids, userId);
+    return this.songsService.findManyByIds(ids, userId, true);
   }
 
   @Query(() => [RecentlyPlayedSong], { name: 'recentlyPlayed' })
@@ -134,6 +134,7 @@ export class UsersResolver {
     const songs = await this.songsService.findManyByIds(
       entries.map((entry) => entry.songId),
       userId,
+      true,
     );
     const songsById = new Map(songs.map((song) => [String(song._id), song]));
 

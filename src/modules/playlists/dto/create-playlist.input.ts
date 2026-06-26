@@ -14,6 +14,9 @@ export class CreatePlaylistInput {
   @Field({ nullable: true, defaultValue: false })
   isPublic?: boolean;
 
+  @Field({ nullable: true, defaultValue: false })
+  isKaraoke?: boolean;
+
   @Field(() => [ID], { nullable: true })
   songIds?: string[];
 }

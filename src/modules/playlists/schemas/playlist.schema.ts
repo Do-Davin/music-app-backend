@@ -44,6 +44,10 @@ export class Playlist {
   @Prop({ default: false })
   isPublic!: boolean;
 
+  @Field({ nullable: true, defaultValue: false })
+  @Prop({ default: false })
+  isKaraoke!: boolean;
+
   @Field({ nullable: true })
   createdAt?: Date;
 
