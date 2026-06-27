@@ -198,7 +198,7 @@ export class AuthService {
 
     try {
       const info = await transporter.sendMail({
-        from: process.env.SMTP_FROM || '"Music App" <noreply@musicapp.com>',
+        from: process.env.SMTP_FROM || '"Music App" <VibeFlow@musicapp.com>',
         to: email,
         subject: 'Password Reset Code',
         text: `Your password reset code is: ${user.resetCode}. It expires in 1 minute.`,
