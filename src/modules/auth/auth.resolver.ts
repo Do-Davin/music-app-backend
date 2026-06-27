@@ -1,4 +1,6 @@
 import { Resolver, Mutation, Args } from '@nestjs/graphql';
+import { UseGuards } from '@nestjs/common';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { RegisterInput } from './dto/register.input';
 import { AuthResponse } from './entities/auth.entity';
@@ -10,11 +12,15 @@ import { VerifyCodeInput } from './dto/verify-code.input';
 import { VerifyCodeResponse } from './entities/verify-code.entity';
 import { ResetPasswordInput } from './dto/reset-password.input';
 import { ResetPasswordResponse } from './entities/reset-password.entity';
+import { GqlThrottlerGuard } from './guards/gql-throttler.guard';
 
 @Resolver()
+@UseGuards(GqlThrottlerGuard)
 export class AuthResolver {
   constructor(private readonly authService: AuthService) {}
 
+  // 3 register attempts per 60 seconds
+  @Throttle({ default: { ttl: 60000, limit: 3 } })
   @Mutation(() => AuthResponse)
   async register(@Args('input') input: RegisterInput): Promise<AuthResponse> {
     return this.authService.register(
@@ -24,6 +30,8 @@ export class AuthResolver {
     );
   }
 
+  // IP-based Rate Limit: Max 20 attempts per 60 seconds (protects the server from DoS/Spam)
+  @Throttle({ default: { ttl: 60000, limit: 20 } })
   @Mutation(() => AuthResponse)
   async login(@Args('input') input: LoginInput): Promise<AuthResponse> {
     const email = input.email;
@@ -39,6 +47,8 @@ export class AuthResolver {
     return await this.authService.refreshToken(refreshToken);
   }
 
+  // 2 sendResetCode requests per 60 seconds (protects Brevo email quota)
+  @Throttle({ default: { ttl: 60000, limit: 2 } })
   @Mutation(() => ResetCodeResponse)
   async sendResetCode(
     @Args('input') input: SendResetCodeInput,
@@ -46,6 +56,8 @@ export class AuthResolver {
     return this.authService.sendResetCode(input.email);
   }
 
+  // 5 verifyCode attempts per 60 seconds
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Mutation(() => VerifyCodeResponse)
   async verifyCode(
     @Args('input') input: VerifyCodeInput,
@@ -53,6 +65,8 @@ export class AuthResolver {
     return this.authService.verifyCode(input.email, input.code);
   }
 
+  // 3 resetPassword attempts per 60 seconds
+  @Throttle({ default: { ttl: 60000, limit: 3 } })
   @Mutation(() => ResetPasswordResponse)
   async resetPassword(
     @Args('input') input: ResetPasswordInput,
@@ -64,3 +78,4 @@ export class AuthResolver {
     );
   }
 }
+

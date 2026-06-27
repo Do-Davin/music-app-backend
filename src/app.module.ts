@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { join } from 'path';
 import { AppResolver } from './app.resolver';
 import { PlaylistsModule } from './modules/playlists/playlists.module';
@@ -19,11 +20,24 @@ import { KaraokeModule } from './modules/karaoke/karaoke.module';
   imports: [
     ConfigModule.forRoot(),
     MongooseModule.forRootAsync(mongoModuleAsyncOptions),
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          name: 'default',
+          ttl: 60000, // 60 seconds window
+          limit: 60, // max 60 requests per window (global safety net)
+        },
+      ],
+    }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
       playground: true,
       csrfPrevention: false,
+      context: ({ req, res }: { req: unknown; res: unknown }) => ({
+        req,
+        res,
+      }),
     }),
     SongsModule,
     PlaylistsModule,
@@ -36,3 +50,4 @@ import { KaraokeModule } from './modules/karaoke/karaoke.module';
   providers: [AppService, AppResolver],
 })
 export class AppModule {}
+
