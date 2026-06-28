@@ -7,6 +7,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { RestJwtAuthGuard } from '../auth/guards/rest-jwt-auth.guard';
@@ -46,6 +47,7 @@ export class UsersController {
     private readonly cloudinaryStorageService: CloudinaryStorageService,
   ) {}
 
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Post('me/profile-image')
   @UseGuards(RestJwtAuthGuard)
   @UseInterceptors(

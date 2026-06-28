@@ -1,5 +1,5 @@
 import { Resolver, Mutation, Args } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
+
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { RegisterInput } from './dto/register.input';
@@ -12,10 +12,7 @@ import { VerifyCodeInput } from './dto/verify-code.input';
 import { VerifyCodeResponse } from './entities/verify-code.entity';
 import { ResetPasswordInput } from './dto/reset-password.input';
 import { ResetPasswordResponse } from './entities/reset-password.entity';
-import { GqlThrottlerGuard } from './guards/gql-throttler.guard';
-
 @Resolver()
-@UseGuards(GqlThrottlerGuard)
 export class AuthResolver {
   constructor(private readonly authService: AuthService) {}
 

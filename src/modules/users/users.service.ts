@@ -3,6 +3,7 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -720,14 +721,17 @@ export class UsersService {
   async validateUser(
     email: string,
     password: string,
-  ): Promise<UserWithoutPassword | null> {
+  ): Promise<UserWithoutPassword> {
     this.validateEmail(email);
 
     const user = await this.findByEmail(email);
-    if (user && (await bcrypt.compare(password, user.password))) {
-      return this.stripPassword(user);
+    if (!user) {
+      throw new UnauthorizedException('No account found with this email address');
     }
-    return null;
+    if (!(await bcrypt.compare(password, user.password))) {
+      throw new UnauthorizedException('Incorrect password');
+    }
+    return this.stripPassword(user);
   }
 
   async updateProfileImage(

@@ -13,8 +13,15 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 @Injectable()
 export class GqlThrottlerGuard extends ThrottlerGuard {
   getRequestResponse(context: ExecutionContext) {
+    if (context.getType() === 'http') {
+      const httpCtx = context.switchToHttp();
+      return {
+        req: httpCtx.getRequest(),
+        res: httpCtx.getResponse(),
+      };
+    }
     const gqlCtx = GqlExecutionContext.create(context);
-    const ctx = gqlCtx.getContext<{ req: Request; res: Response }>();
+    const ctx = gqlCtx.getContext<{ req: any; res: any }>();
     return { req: ctx.req, res: ctx.res };
   }
 

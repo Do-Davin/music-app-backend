@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   ForbiddenException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
@@ -39,13 +40,7 @@ export class AuthService {
   }
 
   async validateUser(email: string, password: string) {
-    const user = await this.usersService.validateUser(email, password);
-
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    return user;
+    return this.usersService.validateUser(email, password);
   }
 
   async login(email: string, password: string) {
@@ -87,7 +82,7 @@ export class AuthService {
         refreshToken: this.jwtService.sign(payload, { expiresIn: '30d' }),
         user,
       };
-    } catch {
+    } catch (error) {
       // Failed login — increment counter
       record.failedAttempts++;
 
@@ -109,8 +104,12 @@ export class AuthService {
       }
 
       const remaining = AuthService.MAX_ATTEMPTS - record.failedAttempts;
+      const originalMessage =
+        error instanceof UnauthorizedException
+          ? error.message
+          : 'Invalid credentials';
       throw new UnauthorizedException(
-        `Invalid credentials. ${remaining} attempt${remaining === 1 ? '' : 's'} remaining.`,
+        `${originalMessage}. ${remaining} attempt${remaining === 1 ? '' : 's'} remaining.`,
       );
     }
   }
@@ -321,6 +320,9 @@ export class AuthService {
       }
     } catch (error) {
       console.error('Error sending email:', error);
+      throw new InternalServerErrorException(
+        'Failed to send reset code email. Please try again later.',
+      );
     }
 
     return {

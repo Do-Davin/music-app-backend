@@ -12,6 +12,9 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
 
+  // Trust proxy headers for rate limiting to work correctly behind reverse proxies (Nginx, ALB, Cloudflare, etc.)
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
+
   app.use(
     '/graphql',
     graphqlUploadExpress({ maxFileSize: 50000000, maxFiles: 10 }),
