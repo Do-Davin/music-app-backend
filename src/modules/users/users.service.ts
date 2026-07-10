@@ -3,6 +3,7 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -720,14 +721,17 @@ export class UsersService {
   async validateUser(
     email: string,
     password: string,
-  ): Promise<UserWithoutPassword | null> {
+  ): Promise<UserWithoutPassword> {
     this.validateEmail(email);
 
     const user = await this.findByEmail(email);
-    if (user && (await bcrypt.compare(password, user.password))) {
-      return this.stripPassword(user);
+    if (!user) {
+      throw new UnauthorizedException('No account found with this email address');
     }
-    return null;
+    if (!(await bcrypt.compare(password, user.password))) {
+      throw new UnauthorizedException('Incorrect password');
+    }
+    return this.stripPassword(user);
   }
 
   async updateProfileImage(
@@ -1211,7 +1215,7 @@ export class UsersService {
     }
 
     const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const resetCodeExpiry = new Date(Date.now() + 15 * 60 * 1000);
+    const resetCodeExpiry = new Date(Date.now() + 1 * 60 * 1000);
 
     user.resetCode = resetCode;
     user.resetCodeExpiry = resetCodeExpiry;
@@ -1254,8 +1258,12 @@ export class UsersService {
     code: string,
     newPassword: string,
   ): Promise<void> {
-    await this.verifyResetCode(email, code);
+    this.validateEmail(email);
     this.validatePassword(newPassword);
+
+    if (!code || code.trim().length !== 6) {
+      throw new BadRequestException('Reset code must be 6 digits');
+    }
 
     const user = await this.userModel
       .findOne({ email: email.toLowerCase() })
@@ -1264,6 +1272,16 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
+
+    if (!user.resetCode) {
+      throw new BadRequestException('No reset code found for this user');
+    }
+
+    if (user.resetCode !== code.trim()) {
+      throw new BadRequestException('Invalid reset code');
+    }
+
+    // Expiry check is skipped here because the code was already successfully verified in step 2.
 
     const hashedPassword: string = await bcrypt.hash(newPassword, 10);
 
