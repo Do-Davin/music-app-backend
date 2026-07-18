@@ -90,6 +90,27 @@ export class ReferencesService {
   }
 
   /**
+   * Determine the correct Cloudinary resource_type from the MIME type.
+   *
+   * Cloudinary's 'auto' detection is unreliable — it incorrectly classifies
+   * PDFs as 'image' because PDF headers can resemble image data. By mapping
+   * from the MIME type explicitly we guarantee the right delivery URL:
+   *   - image/* → 'image'  (jpg, png, gif, webp, svg …)
+   *   - video/* or audio/* → 'video'
+   *   - everything else (PDF, DOCX, PPT, TXT …) → 'raw'
+   *
+   * Only 'raw' resources produce a URL with /raw/upload/ that delivers the
+   * original file bytes. Using 'image' for a PDF gives a broken /image/upload/
+   * URL that Cloudinary cannot serve as a valid PDF.
+   */
+  private resolveResourceType(mimeType: string): 'image' | 'video' | 'raw' {
+    if (mimeType.startsWith('image/')) return 'image';
+    if (mimeType.startsWith('video/') || mimeType.startsWith('audio/'))
+      return 'video';
+    return 'raw';
+  }
+
+  /**
    * Upload a buffer to Cloudinary under the "music-app/references" folder.
    * Returns the Cloudinary public_id (key), the secure_url, and the resource_type.
    */
@@ -101,13 +122,14 @@ export class ReferencesService {
     // Sanitise the filename — strip non-safe chars and prefix with timestamp
     const safeName = `${Date.now()}-${originalName.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
 
+    // Determine resource_type from MIME — never use 'auto' for references
+    const resourceType = this.resolveResourceType(mimeType);
+
     const result = await this.cloudinaryStorage.uploadBuffer({
       buffer,
-      // key is treated as the full public_id path (not just a folder)
       key: `music-app/references/${safeName}`,
       contentType: mimeType,
-      // 'auto' lets Cloudinary detect images, video, and raw (PDF/doc) correctly
-      resourceType: 'auto',
+      resourceType,
     });
 
     return {
