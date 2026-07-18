@@ -192,6 +192,7 @@ type ReferenceMaterial {
   type: String!
   description: String
   filePath: String
+  cloudinaryResourceType: String
   fileUrl: String
   fileName: String
   fileSize: Float

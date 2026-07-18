@@ -11,11 +11,21 @@ export type UploadBufferParams = {
   key: string;
   contentType: string;
   metadata?: Record<string, string>;
+  /**
+   * Cloudinary resource type.
+   * - 'image'  → raster/vector images (default for profile pictures)
+   * - 'video'  → audio and video files
+   * - 'raw'    → any other file: PDFs, DOCXs, ZIPs, etc.
+   * - 'auto'   → let Cloudinary detect (not always reliable for PDFs)
+   * Defaults to 'auto' so the service works correctly for all file types.
+   */
+  resourceType?: 'image' | 'video' | 'raw' | 'auto';
 };
 
 export type UploadBufferResult = {
-  url: string; 
+  url: string;
   key: string;
+  resourceType: string;
 };
 
 @Injectable()
@@ -28,12 +38,20 @@ export class CloudinaryStorageService {
   async uploadBuffer(params: UploadBufferParams): Promise<UploadBufferResult> {
     this.configureCloudinary();
 
+    const resourceType = params.resourceType ?? 'auto';
+
     const result = await new Promise<UploadApiResponse>((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
-          folder: params.key,
-          resource_type: 'image',
+          // Use public_id to set the exact path; using `folder` would let
+          // Cloudinary auto-generate the filename portion, making the
+          // stored key unpredictable and harder to delete later.
+          public_id: params.key,
+          resource_type: resourceType,
           context: params.metadata,
+          // Overwrite if the same key is re-uploaded (idempotent updates)
+          overwrite: true,
+          invalidate: true,
         },
         (error, result) => {
           if (error) {
@@ -56,6 +74,7 @@ export class CloudinaryStorageService {
     return {
       url: result.secure_url,
       key: result.public_id,
+      resourceType: result.resource_type,
     };
   }
 
@@ -65,18 +84,30 @@ export class CloudinaryStorageService {
     return `https://res.cloudinary.com/${cloudName}/image/upload/w_${size},h_${size},c_fill,f_auto,q_auto/${publicId}`;
   }
 
-  async deleteFile(key: string): Promise<void> {
+  /**
+   * Delete a Cloudinary asset by its public_id.
+   *
+   * @param key         The Cloudinary public_id of the asset.
+   * @param resourceType The resource type used when the asset was uploaded.
+   *                    Must match exactly or Cloudinary will return "not found".
+   *                    Defaults to 'image' to preserve existing behaviour for
+   *                    profile picture deletion.
+   */
+  async deleteFile(
+    key: string,
+    resourceType: 'image' | 'video' | 'raw' | 'auto' = 'image',
+  ): Promise<void> {
     if (!key?.trim()) {
       return;
     }
 
     try {
       this.configureCloudinary();
-      await cloudinary.uploader.destroy(key, { resource_type: 'image' });
+      await cloudinary.uploader.destroy(key, { resource_type: resourceType });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       this.logger.warn(
-        `Failed to delete Cloudinary image "${key}": ${message}`,
+        `Failed to delete Cloudinary asset "${key}" (${resourceType}): ${message}`,
       );
     }
   }
