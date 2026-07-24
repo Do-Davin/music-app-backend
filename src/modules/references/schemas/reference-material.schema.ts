@@ -17,7 +17,7 @@ export class ReferenceMaterial {
   @Field()
   @Prop({
     required: true,
-    enum: ['PDF', 'PPT', 'PTT', 'Sheet Music', 'Note', 'Doc', 'Other'],
+    enum: ['PDF', 'PPT', 'Sheet Music', 'Note', 'Doc', 'Other'],
   })
   type: string;
 
@@ -25,13 +25,29 @@ export class ReferenceMaterial {
   @Prop()
   description?: string;
 
-  // Relative path inside the uploads directory, e.g. "references/1719130000000-report.pdf"
+  /**
+   * Cloudinary public_id — used to build transformation URLs and to delete
+   * the asset when the reference material is updated or removed.
+   * e.g. "music-app/references/1719130000000-report"
+   */
   @Field({ nullable: true })
   @Prop()
   filePath?: string;
 
-  // Virtual field — full download URL built from filePath
+  /**
+   * The Cloudinary resource_type ('image', 'video', 'raw') returned after
+   * upload. Stored so we can pass the correct type when deleting the asset.
+   */
+  @Field({ nullable: true })
+  @Prop()
+  cloudinaryResourceType?: string;
+
+  /**
+   * The Cloudinary secure_url returned after upload.
+   * Stored directly so consumers can use it without rebuilding anything.
+   */
   @Field(() => String, { nullable: true })
+  @Prop()
   fileUrl?: string;
 
   @Field({ nullable: true })
@@ -63,25 +79,4 @@ export class ReferenceMaterial {
 
 export const ReferenceMaterialSchema =
   SchemaFactory.createForClass(ReferenceMaterial);
-
-// Build fileUrl from the static uploads path
-ReferenceMaterialSchema.virtual('fileUrl').get(function () {
-  const doc = this as ReferenceMaterialDocument;
-  if (!doc.filePath) return null;
-  const base = process.env.BASE_URL || 'http://localhost:3000';
-  
-  // Clean up filePath if it already contains the uploads prefix to avoid double-prefixing
-  let cleanPath = doc.filePath;
-  if (cleanPath.startsWith('/uploads/')) {
-    cleanPath = cleanPath.substring('/uploads/'.length);
-  } else if (cleanPath.startsWith('uploads/')) {
-    cleanPath = cleanPath.substring('uploads/'.length);
-  }
-  
-  return `${base}/uploads/${cleanPath}`;
-});
-
-// Ensure virtuals are included in JSON/Object conversions
-ReferenceMaterialSchema.set('toJSON', { virtuals: true });
-ReferenceMaterialSchema.set('toObject', { virtuals: true });
 

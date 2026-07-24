@@ -8,6 +8,7 @@ import { ReferencesService } from './references.service';
 import { ReferencesResolver } from './references.resolver';
 import { ReferencesController } from './references.controller';
 import { SongsModule } from '../songs/songs.module';
+import { CloudinaryStorageModule } from '../storage/cloudinary-storage.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { SongsModule } from '../songs/songs.module';
       { name: ReferenceMaterial.name, schema: ReferenceMaterialSchema },
     ]),
     SongsModule,
+    CloudinaryStorageModule,
   ],
   controllers: [ReferencesController],
   providers: [ReferencesService, ReferencesResolver],
