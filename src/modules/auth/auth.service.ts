@@ -169,6 +169,11 @@ export class AuthService {
   async sendResetCode(email: string) {
     const user = await this.usersService.generateResetCode(email);
 
+    // Clear any login lockout for this email — the user has proved ownership
+    // of the account by triggering a password reset, so the lockout is no
+    // longer meaningful and should not block them after resetting.
+    this.loginAttempts.delete(email.toLowerCase());
+
     let transporter: nodemailer.Transporter;
     
     if (process.env.SMTP_HOST) {
